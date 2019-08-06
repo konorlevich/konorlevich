@@ -1,0 +1,28 @@
+{
+  "name": "konorlevich",
+  "version": "0.0.1",
+  "description": "Personal homepage",
+  "main": "build/index.html",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konorlevich/konorlevich.git"
+  },
+  "author": "konorlevich",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/konorlevich/konorlevich/issues"
+  },
+  "homepage": "https://github.com/konorlevich/konorlevich#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-clean": "^0.4.0",
+    "gulp-minify": "^3.1.0",
+    "gulp-sass": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5",
+    "node-sass": "latest"
+  },
+  "dependencies": {}
+}
