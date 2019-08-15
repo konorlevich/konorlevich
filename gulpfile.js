@@ -4,6 +4,7 @@ const sourcemap = require('gulp-sourcemaps');
 sass.compiler = require('node-sass');
 const minify = require('gulp-minify');
 const cleaner = require('gulp-clean');
+const jslint = require('gulp-jslint');
 
 
 function clean() {
@@ -47,11 +48,18 @@ function scriptsMinify() {
 }
 
 function scriptsWatch() {
-    return gulp.watch('source/scripts/*.js', scriptTranspile)
+    return gulp.watch('source/scripts/*.js', gulp.series(jsLint, scriptTranspile));
 }
 
 function stylesWatch() {
     return gulp.watch('source/styles/*.scss', styleTranspile);
+}
+
+function jsLint() {
+    return gulp.src(['source/scripts/*.js'])
+        .pipe(jslint())
+        .pipe(jslint.reporter('default'))
+        .pipe(jslint.reporter('stylish'));
 }
 
 exports.watch = gulp.parallel(stylesWatch, scriptsWatch);
@@ -59,8 +67,10 @@ exports.watch = gulp.parallel(stylesWatch, scriptsWatch);
 exports.build =
     gulp.series(
         clean,
+        jsLint,
         gulp.parallel(
             styleMinify,
             scriptsMinify,
         ));
+exports.test = jsLint;
 exports.default = exports.build;
