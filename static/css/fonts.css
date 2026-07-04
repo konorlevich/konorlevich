@@ -1,0 +1,26 @@
+/* Self-hosted variable fonts (latin subset). Served from /static/fonts.
+   One variable file per family covers the full weight range. */
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 700;      /* variable weight range */
+  font-display: swap;
+  src: url("/static/fonts/Fraunces-var.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/static/fonts/Inter-var.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("/static/fonts/JetBrainsMono-var.woff2") format("woff2");
+}

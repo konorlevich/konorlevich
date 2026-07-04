@@ -1,0 +1,7 @@
+app:
+  address: "asg:13"
+kafka:
+  address: "sdf:12"
+  topic:
+    name: "sdfg"
+    partition: 2

@@ -1,0 +1,261 @@
+/* ============================================================================
+   Design Tokens — Personal Webpage · Petr Travkin
+   Philosophy: WARM MINIMALISM
+   (from .design/personal-webpage/DESIGN_BRIEF.md → Aesthetic Direction)
+
+   Warm minimalism = the restraint of a well-run system, made human by warm
+   neutrals, one confident accent, generous space, and an editorial type voice.
+   Calm, spacious, fast. Reads as a person, not a corporate CV or a terminal.
+
+   Format: CSS custom properties (portable; consumed by Go html/template).
+   Usage:  reference these tokens in component CSS — never hardcode raw values.
+
+   NOTE ON DARK MODE: The brief lists dark mode as OUT OF SCOPE for v1 (single
+   warm light theme). A warm dark palette is included below but is OPTIONAL /
+   FUTURE — do not wire the toggle in v1 unless the brief changes.
+   ========================================================================== */
+
+:root {
+  /* ---------------------------------------------------------------- COLOR
+     Warm neutrals: backgrounds are warm paper, text is warm near-black
+     (never pure #000 / #fff). One accent: a credible, friendly terracotta
+     used only for the primary action and links. Contrast targets WCAG AA. */
+
+  /* Backgrounds */
+  --color-bg-primary:      #faf7f2;  /* warm paper — page background */
+  --color-bg-secondary:    #ffffff;  /* cards lift off the paper */
+  --color-bg-tertiary:     #f2ece1;  /* wells, subtle fills, hovered rows */
+  --color-bg-inverse:      #2a2620;  /* warm near-black surfaces */
+
+  /* Ambient hero glow (theme-aware; consumed by body background-image) */
+  --glow: #fffdf9;                    /* subtle warm lift on paper */
+
+  /* Text */
+  --color-text-primary:    #2a2620;  /* warm near-black — body & headings (AA on paper) */
+  --color-text-secondary:  #6b6357;  /* subdued — dates, meta, intent lines */
+  --color-text-tertiary:   #6f685c;  /* small meta text — AA on paper (5.16:1) */
+  --color-text-inverse:    #faf7f2;  /* text on inverse / accent surfaces */
+  --color-text-link:       #a8482a;  /* terracotta — links (AA on paper) */
+
+  /* Borders */
+  --color-border-primary:   #e6ddce; /* default hairline borders */
+  --color-border-secondary: #f0e9dd; /* subtler dividers */
+  --color-border-focus:     #a8482a; /* focus ring color (accent) */
+
+  /* Accent — the single action color (email CTA) */
+  --color-accent-primary:        #a8482a; /* deep terracotta (white text = AA) */
+  --color-accent-primary-hover:  #8f3d22;
+  --color-accent-primary-active:  #79331c;
+  --color-accent-secondary:      #3f6b5f; /* muted teal — rare secondary use (e.g. availability) */
+
+  /* Soft accent tints (backgrounds for chips / highlights) */
+  --color-accent-soft:      #f5e4dc;  /* terracotta wash */
+  --color-accent-soft-text: #7a3319;  /* readable text on the wash */
+
+  /* Status (used sparingly — this is not a dashboard) */
+  --color-status-success:  #3f7d4f;
+  --color-status-warning:  #b07a1e;
+  --color-status-error:    #b23b2e;
+  --color-status-info:     #3f6b7d;
+
+  /* Overlay */
+  --color-surface-overlay: rgba(42, 38, 32, 0.45);
+
+  /* ---------------------------------------------------------------- SPACING
+     8px base, generous multipliers — warm minimalism breathes.
+     Section rhythm lives in the high steps (9–12). */
+  --space-0:  0;
+  --space-1:  0.125rem;  /*  2px */
+  --space-2:  0.25rem;   /*  4px */
+  --space-3:  0.375rem;  /*  6px */
+  --space-4:  0.5rem;    /*  8px  ← base */
+  --space-5:  0.75rem;   /* 12px */
+  --space-6:  1rem;      /* 16px */
+  --space-7:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-9:  3rem;      /* 48px */
+  --space-10: 4rem;      /* 64px */
+  --space-11: 6rem;      /* 96px  ← between-section spacing */
+  --space-12: 8rem;      /* 128px ← hero / major breaks */
+
+  /* ---------------------------------------------------------------- TYPOGRAPHY
+     Editorial warmth: a soft serif display (Fraunces) for name/headings,
+     a clean humanist sans (Inter) for body, a quiet mono (JetBrains Mono)
+     for technical detail (dates, skill tags) — an engineer's fingerprint,
+     not a terminal motif.
+     ⚠ Fonts must be loaded (self-host or Google Fonts) — see build tasks. */
+  --font-family-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-family-body:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --font-size-xs:   0.75rem;    /* 12px — mono tags, fine print */
+  --font-size-sm:   0.875rem;   /* 14px — meta, labels */
+  --font-size-base: 1.0625rem;  /* 17px — body (a touch large = warm, readable) */
+  --font-size-md:   1.25rem;    /* 20px — lead paragraph / intro */
+  --font-size-lg:   1.5rem;     /* 24px — subsection headings */
+  --font-size-xl:   1.875rem;   /* 30px — section headings */
+  --font-size-2xl:  2.25rem;    /* 36px */
+  --font-size-3xl:  3rem;       /* 48px */
+  --font-size-4xl:  3.75rem;    /* 60px — hero name (scales down on mobile) */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --line-height-tight:   1.15;  /* display / hero */
+  --line-height-snug:    1.3;   /* headings */
+  --line-height-normal:  1.6;   /* body */
+  --line-height-relaxed: 1.75;  /* long-form passages */
+
+  --letter-spacing-tight:  -0.02em; /* large display type */
+  --letter-spacing-normal:  0;
+  --letter-spacing-wide:    0.08em; /* all-caps labels, eyebrows */
+
+  /* ---------------------------------------------------------------- LAYOUT */
+  --max-width-content: 42rem;  /* ~68ch — comfortable reading column */
+  --max-width-wide:    60rem;  /* project grid / wide sections */
+  --max-width-page:    72rem;  /* outer page bound */
+
+  --border-radius-sm:   6px;
+  --border-radius-md:   10px;
+  --border-radius-lg:   16px;  /* cards */
+  --border-radius-full: 999px; /* pills, avatar, chips */
+
+  /* Warm-tinted, soft shadows — minimal elevation, never heavy */
+  --shadow-sm:   0 1px 2px rgba(60, 45, 30, 0.06);
+  --shadow-md:   0 4px 12px rgba(60, 45, 30, 0.08);
+  --shadow-lg:   0 12px 32px rgba(60, 45, 30, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(168, 72, 42, 0.35); /* accent focus ring */
+
+  /* ---------------------------------------------------------------- MOTION
+     Subtle by philosophy. Respect prefers-reduced-motion (see bottom). */
+  --duration-instant: 50ms;
+  --duration-fast:    150ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+  --duration-slower:  600ms;
+
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in:      cubic-bezier(0.4, 0, 1, 1);
+  --easing-out:     cubic-bezier(0, 0, 0.2, 1);
+  --easing-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---------------------------------------------------------------- COMPONENT
+     A few convenience aliases so components stay DRY. */
+  --cta-bg:          var(--color-accent-primary);
+  --cta-bg-hover:    var(--color-accent-primary-hover);
+  --cta-bg-active:   var(--color-accent-primary-active);
+  --cta-text:        var(--color-text-inverse);
+  --cta-radius:      var(--border-radius-full);
+  --cta-shadow:      var(--shadow-sm);
+
+  --card-bg:         var(--color-bg-secondary);
+  --card-border:     var(--color-border-primary);
+  --card-radius:     var(--border-radius-lg);
+  --card-shadow:     var(--shadow-md);
+
+  --chip-bg:         var(--color-bg-tertiary);
+  --chip-text:       var(--color-text-secondary);
+  --chip-radius:     var(--border-radius-full);
+}
+
+/* ============================================================================
+   RESPONSIVE BREAKPOINTS  (reference — use in @media queries)
+   --breakpoint-sm:  375px   mobile
+   --breakpoint-md:  768px   tablet   (hero photo goes side-by-side)
+   --breakpoint-lg:  1024px  small desktop
+   --breakpoint-xl:  1280px  desktop
+   --breakpoint-2xl: 1536px  wide
+   ==========================================================================
+   Suggested fluid hero scaling (implement in components, not a token):
+   .hero-name { font-size: clamp(2.5rem, 6vw, var(--font-size-4xl)); }
+   ========================================================================== */
+
+/* ============================================================================
+   DARK MODE — OPTIONAL / FUTURE (out of scope for v1 per brief).
+   Warm dark: brown-charcoal, not pure black; softened off-white text.
+   Included so a future toggle is a config change, not a redesign.
+   Provided via both an explicit [data-theme="dark"] and a system-preference
+   fallback that respects an explicit light choice.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  --color-bg-primary:      #1c1917;  /* warm near-black */
+  --color-bg-secondary:    #262220;  /* raised cards */
+  --color-bg-tertiary:     #302b27;  /* wells */
+  --color-bg-inverse:      #faf7f2;
+
+  --color-text-primary:    #ede6db;  /* warm off-white (not pure) */
+  --color-text-secondary:  #b3a99c;
+  --color-text-tertiary:   #94897d;  /* small meta text — AA on dark (5.11:1) */
+  --color-text-inverse:    #2a2620;
+  --color-text-link:       #e0855f;  /* lightened terracotta for dark bg */
+  --glow: rgba(255, 232, 210, 0.05); /* faint warm lift — not a gray smudge */
+
+  --color-border-primary:   #3a342f;
+  --color-border-secondary: #2f2a26;
+  --color-border-focus:     #e0855f;
+
+  --color-accent-primary:        #d9744e;  /* lightened terracotta — AA on dark */
+  --color-accent-primary-hover:  #e0855f;
+  --color-accent-primary-active: #c7623c;
+  --color-accent-secondary:      #6fa091;
+
+  --color-accent-soft:      #3a2a22;
+  --color-accent-soft-text: #f0b79f;
+
+  --color-surface-overlay:  rgba(0, 0, 0, 0.55);
+
+  /* Dark shadows: darker + more transparent, never reused from light */
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 3px rgba(217, 116, 78, 0.40);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg-primary:      #1c1917;
+    --color-bg-secondary:    #262220;
+    --color-bg-tertiary:     #302b27;
+    --color-bg-inverse:      #faf7f2;
+
+    --color-text-primary:    #ede6db;
+    --color-text-secondary:  #b3a99c;
+    --color-text-tertiary:   #94897d;  /* small meta text — AA on dark (5.11:1) */
+    --color-text-inverse:    #2a2620;
+    --color-text-link:       #e0855f;
+    --glow: rgba(255, 232, 210, 0.05); /* faint warm lift — not a gray smudge */
+
+    --color-border-primary:   #3a342f;
+    --color-border-secondary: #2f2a26;
+    --color-border-focus:     #e0855f;
+
+    --color-accent-primary:        #d9744e;
+    --color-accent-primary-hover:  #e0855f;
+    --color-accent-primary-active: #c7623c;
+    --color-accent-secondary:      #6fa091;
+
+    --color-accent-soft:      #3a2a22;
+    --color-accent-soft-text: #f0b79f;
+
+    --color-surface-overlay:  rgba(0, 0, 0, 0.55);
+
+    --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.40);
+    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.45);
+    --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.55);
+    --shadow-focus: 0 0 0 3px rgba(217, 116, 78, 0.40);
+  }
+}
+
+/* Respect reduced motion globally (components should honor this too) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast:    0ms;
+    --duration-normal:  0ms;
+    --duration-slow:    0ms;
+    --duration-slower:  0ms;
+  }
+}

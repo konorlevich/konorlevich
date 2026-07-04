@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------------
+# Content for the personal webpage. Updated 2026-07-04 from LinkedIn (Profile.pdf).
+# Voice kept warm & first-person; real metrics folded in from the profile.
+# ---------------------------------------------------------------------------
+name: "Petr Travkin"
+tagline: "I build reliable software — and help people ship it."
+intro: "Self-taught software engineer with 10 years across product and infrastructure teams. I like turning messy systems into calm, dependable ones — and I get the most joy when the result visibly changes someone's experience."
+summary: "Software engineer with a self-taught background and 8 years of international experience across product and infrastructure teams. I've designed internal platforms and release pipelines used by hundreds of services, shipped my own products end to end, and now work on payment systems."
+location: "Tbilisi, Georgia"
+availability: "Open to remote or relocation"
+languages:
+  - "English"
+  - "Russian"
+email: "hello@konorlevich.tech"
+photo: "/static/img/photo.jpg"   # served with a .webp sibling (photo.webp) via <picture>; comment out to use the initials avatar
+links:
+  - name: "Email"
+    url: "mailto:hello@konorlevich.tech"
+  - name: "LinkedIn"
+    url: "https://www.linkedin.com/in/konorlevich"
+  - name: "GitHub"
+    url: "https://github.com/konorlevich"
+skills:
+  - category: "Languages"
+    items:
+      - "Go"
+      - "PHP"
+      - "Kotlin"
+  - category: "Infrastructure"
+    items:
+      - "Docker"
+      - "Kubernetes"
+      - "CI/CD"
+  - category: "Databases"
+    items:
+      - "MySQL"
+      - "PostgreSQL"
+      - "Redis"
+work_experience:
+  - company: "Payment gateway"
+    role: "Senior Software Engineer"
+    from: "2024-11-01"
+    # to omitted → renders as "Present"
+    skills:
+      - "Go"
+      - "PostgreSQL"
+      - "Kubernetes"
+      - "Asynchronous operations"
+      - "PCI DSS"
+    achievements:
+      - "Building and operating backend services for payments and billing in a PCI-DSS environment." # ← add specific achievements/metrics for your current role
+  - company: "Bumble"
+    role: "Release Engineer -> Senior Release Engineer"
+    from: "2019-12-01"
+    to: "2024-04-01"
+    skills:
+      - "Go"
+      - "Kotlin"
+      - "Docker"
+      - "Kubernetes"
+    achievements:
+      - "Designed and built a Kubernetes-centric internal platform (PaaS) that deploys 100+ services across Go, Kotlin and PHP — and presented it to 150+ colleagues globally."
+      - "Saved the company $100k+ a year with a service that surfaced CI/CD code-quality reports as clear annotations in GitHub."
+      - "Built a pipeline-configuration library adopted across 130+ projects, letting teams set up complex build/test/deploy flows from a small snippet."
+  - company: "Linkprofit"
+    role: "Backend Developer"
+    from: "2017-05-01"
+    to: "2019-03-01"
+    skills:
+      - "Go"
+      - "Microservices"
+      - "Redis"
+    achievements:
+      - "Led a team of three and split a monolith into microservices, cutting API response time 10× — from 2s to 0.2s."
+      - "Integrated 20+ partner platforms into the company's core integration system and kept them running."
+projects:
+  - name: "Kids Space"
+    url: "https://kidsspace.ge/"
+    description: "A multilingual website (Georgian, English, Russian) for a kindergarten in Tbilisi — warm, clear, and easy for parents to navigate."
+    badge: "Client site"
+  - name: "AI News"
+    url: "https://ai-news.ge"
+    description: "A Georgian-language platform that publishes the latest AI news for local readers. Built and run end to end."
+    badge: "Own product"
+  - name: "Chat Structure Helper"
+    url: "https://tgchathelperbot.tech"
+    description: "A no-code Telegram bot that auto-organizes group chats — topics, permissions, and welcome templates — via a visual builder. EN/RU/ES."
+    badge: "Own product"
