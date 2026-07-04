@@ -40,6 +40,7 @@ The endpoint is only registered when `RESEND_API_KEY`, `RESEND_FROM` and
 | `RESEND_FROM` | yes | Verified sender for the forward, e.g. `konorlevich.tech <forward@konorlevich.tech>`. Must be on a domain verified in Resend. |
 | `FORWARD_TO` | yes | Destination inbox, e.g. `konorlevich@gmail.com`. |
 | `RESEND_WEBHOOK_SECRET` | recommended | Svix signing secret (`whsec_…`) from the webhook's dashboard page. When set, signatures are enforced; when unset, verification is skipped (a warning is logged). |
+| `FORWARD_DOMAIN` | no | Only forward mail actually addressed to `*@<domain>` (matched against `received_for`, falling back to `To`). Off-domain mail is acked and skipped. When unset, all received mail is forwarded. |
 | `FORWARD_SUBJECT_PREFIX` | no | Subject prefix for forwarded mail (default `[konorlevich.tech] `). |
 
 ### Resend setup

@@ -37,6 +37,7 @@ type Config struct {
 	WebhookSecret string // RESEND_WEBHOOK_SECRET (whsec_...)
 	From          string // RESEND_FROM — a verified sender, e.g. "konorlevich.tech <forward@konorlevich.tech>"
 	To            string // FORWARD_TO — destination inbox
+	Domain        string // FORWARD_DOMAIN — only forward mail addressed to *@<domain> (optional)
 	SubjectPrefix string // FORWARD_SUBJECT_PREFIX (optional)
 }
 
@@ -51,6 +52,7 @@ func ConfigFromEnv() Config {
 		WebhookSecret: os.Getenv("RESEND_WEBHOOK_SECRET"),
 		From:          os.Getenv("RESEND_FROM"),
 		To:            os.Getenv("FORWARD_TO"),
+		Domain:        strings.ToLower(strings.TrimSpace(os.Getenv("FORWARD_DOMAIN"))),
 		SubjectPrefix: prefix,
 	}
 }
@@ -182,6 +184,18 @@ func (f *Forwarder) Handler() http.HandlerFunc {
 			return
 		}
 
+		// Only forward mail actually addressed to the configured domain. Ack
+		// with 200 (not an error) so Resend does not retry a deliberate skip.
+		if !f.addressedToDomain(email) {
+			f.log.WithFields(logrus.Fields{
+				"domain":       f.cfg.Domain,
+				"received_for": email.ReceivedFor,
+				"to":           email.To,
+			}).Info("mailforward: skipping email not addressed to configured domain")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		if err := f.sendEmail(ctx, f.buildForward(email)); err != nil {
 			f.log.WithError(err).Error("mailforward: forward send")
 			http.Error(w, "forward failed", http.StatusBadGateway)
@@ -195,6 +209,41 @@ func (f *Forwarder) Handler() http.HandlerFunc {
 		}).Info("mailforward: forwarded inbound email")
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+// addressedToDomain reports whether the email was delivered to a recipient at
+// the configured domain. When no domain is configured it forwards everything.
+// It prefers received_for (the actual delivery target) and falls back to To.
+func (f *Forwarder) addressedToDomain(e receivedEmail) bool {
+	if f.cfg.Domain == "" {
+		return true
+	}
+	recipients := e.ReceivedFor
+	if len(recipients) == 0 {
+		recipients = e.To
+	}
+	for _, r := range recipients {
+		if domainOf(r) == f.cfg.Domain {
+			return true
+		}
+	}
+	return false
+}
+
+// domainOf extracts the lowercased domain from an address, tolerating a
+// display-name form like "Name <user@example.com>".
+func domainOf(addr string) string {
+	addr = strings.TrimSpace(addr)
+	if i := strings.LastIndex(addr, "<"); i >= 0 {
+		if j := strings.Index(addr[i:], ">"); j >= 0 {
+			addr = addr[i+1 : i+j]
+		}
+	}
+	at := strings.LastIndex(addr, "@")
+	if at < 0 {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(addr[at+1:]))
 }
 
 // buildForward turns a received email into the outbound forward request.

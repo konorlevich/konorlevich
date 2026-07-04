@@ -98,6 +98,51 @@ func TestBuildForwardEscapesAndAttachments(t *testing.T) {
 	}
 }
 
+func TestDomainOf(t *testing.T) {
+	cases := map[string]string{
+		"hello@konorlevich.tech":  "konorlevich.tech",
+		"Name <user@Example.COM>": "example.com",
+		"  spaced@domain.com  ":   "domain.com",
+		"no-at-sign":              "",
+		"a@b@konorlevich.tech":    "konorlevich.tech",
+	}
+	for in, want := range cases {
+		if got := domainOf(in); got != want {
+			t.Errorf("domainOf(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestAddressedToDomain(t *testing.T) {
+	f := testForwarder(t)
+
+	// No domain configured → forward everything.
+	if !f.addressedToDomain(receivedEmail{To: []string{"x@other.com"}}) {
+		t.Error("empty domain should forward everything")
+	}
+
+	f.cfg.Domain = "konorlevich.tech"
+
+	if !f.addressedToDomain(receivedEmail{ReceivedFor: []string{"hello@konorlevich.tech"}}) {
+		t.Error("received_for on the domain should be accepted")
+	}
+	// Falls back to To when received_for is empty.
+	if !f.addressedToDomain(receivedEmail{To: []string{"Support <hi@Konorlevich.Tech>"}}) {
+		t.Error("To on the domain should be accepted (case-insensitive)")
+	}
+	// received_for takes precedence; an off-domain received_for is rejected even
+	// if a matching address appears in To (e.g. Bcc-style delivery).
+	if f.addressedToDomain(receivedEmail{
+		ReceivedFor: []string{"leak@evil.com"},
+		To:          []string{"hello@konorlevich.tech"},
+	}) {
+		t.Error("off-domain received_for should be rejected")
+	}
+	if f.addressedToDomain(receivedEmail{To: []string{"someone@evil.com"}}) {
+		t.Error("off-domain mail should be rejected")
+	}
+}
+
 func TestBuildForwardTextOnly(t *testing.T) {
 	f := testForwarder(t)
 	txt := "plain body"
