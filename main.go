@@ -193,59 +193,71 @@ func servePDF() http.HandlerFunc {
 
 		pdf := fpdf.New("P", "mm", "A4", "")
 		pdf.AddPage()
+		// Translate UTF-8 content into the core font's cp1252 encoding so
+		// characters like em dashes and × render correctly (not mojibake).
+		tr := pdf.UnicodeTranslatorFromDescriptor("")
 
-		// Add CV info into PDF
+		// Name
 		pdf.SetFont("Arial", "B", 16)
-		pdf.Cell(40, 10, cv.Name)
+		pdf.Cell(40, 10, tr(cv.Name))
 		pdf.Ln(10)
 
-		// Links section
+		// Links section — rendered as clickable hyperlinks
 		pdf.SetFont("Arial", "B", 14)
 		pdf.Cell(40, 10, "Links")
 		pdf.Ln(8)
 		pdf.SetFont("Arial", "", 12)
 		for _, link := range cv.Links {
-			pdf.Cell(40, 10, fmt.Sprintf("%s: %s", link.Name, link.URL))
-			pdf.Ln(8)
+			label := tr(link.Name + ": ")
+			pdf.CellFormat(pdf.GetStringWidth(label)+1, 8, label, "", 0, "L", false, 0, "")
+			// display without the mailto: scheme, but keep it as the link target
+			display := strings.TrimPrefix(link.URL, "mailto:")
+			pdf.SetTextColor(168, 72, 42) // terracotta accent
+			pdf.SetFont("Arial", "U", 12) // underlined
+			pdf.CellFormat(0, 8, tr(display), "", 1, "L", false, 0, link.URL)
+			pdf.SetFont("Arial", "", 12)
+			pdf.SetTextColor(0, 0, 0)
 		}
 
 		// Work Experience
+		pdf.Ln(2)
 		pdf.SetFont("Arial", "B", 14)
 		pdf.Cell(40, 10, "Work Experience")
 		pdf.Ln(10)
 
-		pdf.SetFont("Arial", "", 12)
 		for _, exp := range cv.WorkExperience {
-			pdf.Cell(40, 10, fmt.Sprintf("%s - %s", exp.Company, exp.Role))
-			pdf.Ln(8)
-			pdf.Cell(40, 10, fmt.Sprintf("From: %s to %s", exp.From, func() string {
-				if exp.To == "" {
-					return "Present"
-				}
-				return exp.To
-			}()))
+			to := exp.To
+			if to == "" {
+				to = "Present"
+			}
+			pdf.SetFont("Arial", "B", 12)
+			pdf.Cell(40, 8, tr(fmt.Sprintf("%s - %s", exp.Company, exp.Role)))
+			pdf.Ln(6)
+			pdf.SetFont("Arial", "", 12)
+			pdf.Cell(40, 8, tr(fmt.Sprintf("From: %s to %s", exp.From, to)))
 			pdf.Ln(8)
 
-			// Add Skills
-			pdf.Cell(40, 10, "Skills:")
+			pdf.Cell(40, 8, "Skills:")
 			pdf.Ln(6)
 			for _, skill := range exp.Skills {
-				pdf.Cell(40, 10, fmt.Sprintf("- %s", skill))
+				pdf.Cell(40, 8, tr(fmt.Sprintf("- %s", skill)))
 				pdf.Ln(6)
 			}
 
-			// Add Achievements
-			pdf.Ln(6)
-			pdf.Cell(40, 10, "Achievements:")
+			pdf.Ln(4)
+			pdf.Cell(40, 8, "Achievements:")
 			pdf.Ln(6)
 			for _, achievement := range exp.Achievements {
-				pdf.MultiCell(190, 10, fmt.Sprintf("- %s", achievement), "", "", false)
+				pdf.MultiCell(190, 6, tr(fmt.Sprintf("- %s", achievement)), "", "", false)
 			}
-			pdf.Ln(12)
+			pdf.Ln(8)
 		}
 
-		err = pdf.Output(w)
-		if err != nil {
+		// Serve inline with a sensible filename if saved.
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Header().Set("Content-Disposition",
+			fmt.Sprintf("inline; filename=%q", strings.ReplaceAll(cv.Name, " ", "-")+"-CV.pdf"))
+		if err = pdf.Output(w); err != nil {
 			http.Error(w, "Could not generate PDF", http.StatusInternalServerError)
 		}
 	}
