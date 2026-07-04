@@ -76,6 +76,16 @@ func main() {
 	l = log.New()
 	l.SetFormatter(&log.JSONFormatter{})
 
+	// LOG_LEVEL controls verbosity (e.g. debug enables Resend API call logs).
+	if lvl := os.Getenv("LOG_LEVEL"); lvl != "" {
+		parsed, err := log.ParseLevel(lvl)
+		if err != nil {
+			l.WithError(err).WithField("log_level", lvl).Warn("invalid LOG_LEVEL, keeping default")
+		} else {
+			l.SetLevel(parsed)
+		}
+	}
+
 	configFile := os.Getenv("CONFIG_FILE")
 
 	if configFile == "" {
@@ -120,7 +130,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    cfg.App.Address,
-		Handler: handler,
+		Handler: logRequests(handler, l),
 	}
 
 	go func() {
@@ -146,6 +156,46 @@ func main() {
 		l.WithError(err).Fatalf("can't shut the server down gracefully")
 	}
 
+}
+
+// logRequests is HTTP access-log middleware: it logs one line per request with
+// method, path, status, response size and latency once the handler returns.
+func logRequests(next http.Handler, l *log.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		lw := &logResponseWriter{ResponseWriter: w, status: http.StatusOK}
+
+		next.ServeHTTP(lw, r)
+
+		l.WithFields(log.Fields{
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"status":      lw.status,
+			"bytes":       lw.bytes,
+			"duration_ms": time.Since(start).Milliseconds(),
+			"remote_addr": r.RemoteAddr,
+			"user_agent":  r.UserAgent(),
+		}).Info("http request")
+	})
+}
+
+// logResponseWriter wraps http.ResponseWriter to capture the status code and
+// number of bytes written for access logging.
+type logResponseWriter struct {
+	http.ResponseWriter
+	status int
+	bytes  int
+}
+
+func (w *logResponseWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *logResponseWriter) Write(b []byte) (int, error) {
+	n, err := w.ResponseWriter.Write(b)
+	w.bytes += n
+	return n, err
 }
 
 // Handle contact form submission

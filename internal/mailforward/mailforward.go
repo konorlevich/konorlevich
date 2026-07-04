@@ -342,12 +342,21 @@ func (f *Forwarder) getReceivedEmail(ctx context.Context, id string) (receivedEm
 	}
 	req.Header.Set("Authorization", "Bearer "+f.cfg.APIKey)
 
+	start := time.Now()
+	f.log.WithField("email_id", id).Debug("resend: GET received email")
 	resp, err := f.client.Do(req)
 	if err != nil {
+		f.log.WithError(err).WithField("email_id", id).Error("resend: GET received email failed")
 		return out, err
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxWebhookBody))
+	f.log.WithFields(logrus.Fields{
+		"email_id":    id,
+		"status":      resp.StatusCode,
+		"bytes":       len(respBody),
+		"duration_ms": time.Since(start).Milliseconds(),
+	}).Debug("resend: GET received email response")
 	if resp.StatusCode != http.StatusOK {
 		return out, fmt.Errorf("resend get received email: status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
 	}
@@ -369,12 +378,23 @@ func (f *Forwarder) sendEmail(ctx context.Context, msg sendRequest) error {
 	req.Header.Set("Authorization", "Bearer "+f.cfg.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
+	start := time.Now()
+	f.log.WithFields(logrus.Fields{
+		"to":      msg.To,
+		"subject": msg.Subject,
+	}).Debug("resend: POST send email")
 	resp, err := f.client.Do(req)
 	if err != nil {
+		f.log.WithError(err).Error("resend: POST send email failed")
 		return err
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	f.log.WithFields(logrus.Fields{
+		"to":          msg.To,
+		"status":      resp.StatusCode,
+		"duration_ms": time.Since(start).Milliseconds(),
+	}).Debug("resend: POST send email response")
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("resend send: status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
 	}
