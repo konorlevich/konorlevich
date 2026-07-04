@@ -98,21 +98,6 @@ func main() {
 	appCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	defer stop()
 
-	//conn, err := kafka.DialLeader(appCtx, "tcp", cfg.Kafka.Address, cfg.Kafka.Topic.Name, cfg.Kafka.Topic.Partition)
-	//if err != nil {
-	//	l.WithError(err).Fatal("failed to dial kafka leader")
-	//}
-	//defer func() {
-	//	if err = conn.Close(); err != nil {
-	//		l.WithError(err).Error("failed to close writer:", err)
-	//	}
-	//}()
-
-	//err = conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	//if err != nil {
-	//	l.WithError(err).Fatal("failed to set write kafka connection deadline")
-	//}
-
 	handler := &http.ServeMux{}
 	handler.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	handler.Handle("GET /", serveHTML())
