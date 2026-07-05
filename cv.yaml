@@ -78,15 +78,15 @@ work_experience:
       - "Led a team of three and split a monolith into microservices, cutting API response time 10× — from 2s to 0.2s."
       - "Integrated 20+ partner platforms into the company's core integration system and kept them running."
 projects:
-  - name: "Kids Space"
-    url: "https://kidsspace.ge/"
-    description: "A multilingual website (Georgian, English, Russian) for a kindergarten in Tbilisi — warm, clear, and easy for parents to navigate."
-    screenshot: "/static/img/proj-kidsspace.jpg"   # served with a .webp sibling via <picture>
-    badge: "Client site"
   - name: "Speakadoo"
     url: "https://speakadoo.club"
     description: "A multilingual website (Georgian, English, Russian) for an English-language school for young children in Tbilisi — warm and welcoming for kids and parents alike."
     screenshot: "/static/img/proj-speakadoo.jpg"
+    badge: "Client site"
+  - name: "Kids Space"
+    url: "https://kidsspace.ge/"
+    description: "A multilingual website (Georgian, English, Russian) for a kindergarten in Tbilisi — warm, clear, and easy for parents to navigate."
+    screenshot: "/static/img/proj-kidsspace.jpg"   # served with a .webp sibling via <picture>
     badge: "Client site"
   - name: "AI News"
     url: "https://ai-news.ge"
