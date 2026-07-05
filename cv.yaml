@@ -37,7 +37,7 @@ skills:
       - "PostgreSQL"
       - "Redis"
 work_experience:
-  - company: "Payment gateway"
+  - company: "Payment platform"
     role: "Senior Software Engineer"
     from: "2024-11-01"
     # to omitted → renders as "Present"
