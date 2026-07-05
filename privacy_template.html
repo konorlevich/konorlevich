@@ -3,9 +3,9 @@
 <head>
     <!-- Google Analytics via Google Consent Mode v2 — same gate as the home page.
          Shared bootstrap (single source of truth), blocking, before gtag/js. -->
-    <script src="/static/js/consent-default.js"></script>
+    <script src="{{asset "js/consent-default.js"}}"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH8KWHKMPZ"></script>
-    <script defer src="/static/js/consent.js"></script>
+    <script defer src="{{asset "js/consent.js"}}"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,9 +19,9 @@
 
     <link rel="preload" href="/static/fonts/Fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/static/css/fonts.css">
-    <link rel="stylesheet" href="/static/css/tokens.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="{{asset "css/fonts.css"}}">
+    <link rel="stylesheet" href="{{asset "css/tokens.css"}}">
+    <link rel="stylesheet" href="{{asset "css/styles.css"}}">
 </head>
 <body>
 

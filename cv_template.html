@@ -5,11 +5,11 @@
          DENIED: the GA library loads but sets no cookies until the visitor accepts.
          The bootstrap below (blocking, single source of truth) MUST run before
          gtag/js. Consent is gated by /static/js/consent.js and the bottom bar. -->
-    <script src="/static/js/consent-default.js"></script>
+    <script src="{{asset "js/consent-default.js"}}"></script>
     <!-- GA library: honors the consent state set by the bootstrap above. -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH8KWHKMPZ"></script>
     <!-- Consent state manager (owns the stored choice + the consent bar wiring). -->
-    <script defer src="/static/js/consent.js"></script>
+    <script defer src="{{asset "js/consent.js"}}"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Name}} — Software Engineer</title>
@@ -35,9 +35,9 @@
     <!-- Fonts: preload the above-the-fold families, then stylesheets in order -->
     <link rel="preload" href="/static/fonts/Fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/static/css/fonts.css">
-    <link rel="stylesheet" href="/static/css/tokens.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="{{asset "css/fonts.css"}}">
+    <link rel="stylesheet" href="{{asset "css/tokens.css"}}">
+    <link rel="stylesheet" href="{{asset "css/styles.css"}}">
 </head>
 <body>
 

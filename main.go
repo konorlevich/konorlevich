@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -33,8 +37,30 @@ var (
 	privacyTmpl *template.Template
 )
 
+// assetVerCache memoizes cache-busting URLs so each static file is hashed once.
+var assetVerCache sync.Map // rel path -> "/static/<rel>?v=<hash>"
+
+// assetURL returns a cache-busting URL for a file under static/, based on its
+// content hash. Because the HTML is served fresh (not edge-cached), a changed
+// file yields a new ?v= value → a new CDN cache key → no stale asset after a
+// deploy, without any manual purge. Falls back to the plain path if unreadable.
+func assetURL(rel string) string {
+	if v, ok := assetVerCache.Load(rel); ok {
+		return v.(string)
+	}
+	url := "/static/" + rel
+	if b, err := os.ReadFile(filepath.Join("static", filepath.FromSlash(rel))); err == nil {
+		sum := sha256.Sum256(b)
+		url = "/static/" + rel + "?v=" + hex.EncodeToString(sum[:])[:8]
+	}
+	assetVerCache.Store(rel, url)
+	return url
+}
+
 // templateFuncs are helpers available inside cv_template.html.
 var templateFuncs = template.FuncMap{
+	// asset returns a content-hashed URL for a file in static/ (cache busting).
+	"asset": assetURL,
 	// formatDate turns "2006-01-02" into "Jan 2006"; passes through on error.
 	"formatDate": func(s string) string {
 		if s == "" {
