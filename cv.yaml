@@ -39,7 +39,7 @@ skills:
 work_experience:
   - company: "Payment platform"
     role: "Senior Software Engineer"
-    from: "2024-11-01"
+    from: "Nov 2024"
     # to omitted → renders as "Present"
     skills:
       - "Go"
@@ -51,24 +51,28 @@ work_experience:
       - "Build and operate backend services for payments and billing in a PCI-DSS environment, focused on correctness under load and safe, auditable money movement."
   - company: "Bumble"
     role: "Release Engineer -> Senior Release Engineer"
-    from: "2019-12-01"
-    to: "2024-04-01"
+    from: "Dec 2019"
+    to: "Apr 2024"
     skills:
       - "Go"
+      - "PHP"
       - "Kotlin"
       - "Docker"
       - "Kubernetes"
+      - "Jira API"
+      - "TeamCity DSL"
     achievements:
       - "Designed and built a Kubernetes-centric internal platform (PaaS) that deploys 100+ services across Go, Kotlin and PHP — and presented it to 150+ colleagues globally."
       - "Saved the company $100k+ a year with a service that surfaced CI/CD code-quality reports as clear annotations in GitHub."
       - "Built a pipeline-configuration library adopted across 130+ projects, letting teams set up complex build/test/deploy flows from a small snippet."
   - company: "Linkprofit"
     role: "Backend Developer"
-    from: "2017-05-01"
-    to: "2019-03-01"
+    from: "May 2016"
+    to: "Mar 2019"
     skills:
+      - "PHP"
       - "Go"
-      - "Microservices"
+      - "MySQL"
       - "Redis"
     achievements:
       - "Led a team of three and split a monolith into microservices, cutting API response time 10× — from 2s to 0.2s."
