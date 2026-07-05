@@ -441,8 +441,8 @@ strong { font-weight: var(--font-weight-semibold); }
   text-align: center;
 }
 .footer-links { display: flex; flex-wrap: wrap; gap: var(--space-6); justify-content: center; }
-.footer-links a { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
-.footer-links a:hover { color: var(--color-accent-primary); }
+.footer-links a, .footer-linklike { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.footer-links a:hover, .footer-linklike:hover { color: var(--color-accent-primary); }
 .footer-note { color: var(--color-text-tertiary); font-size: var(--font-size-sm); }
 .footer-note .sig { color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
 
@@ -547,18 +547,19 @@ strong { font-weight: var(--font-weight-semibold); }
 }
 .legal-back { margin-top: var(--space-9); }
 
-/* Footer link that triggers JS (reopen consent) — looks like the other footer
-   links, but is a <button> for correct semantics. */
+/* Footer link that triggers JS (reopen consent). Colour + size come from the
+   shared `.footer-links a, .footer-linklike` rule above; here we just strip the
+   native <button> chrome so it reads as a plain footer link. */
 .footer-linklike {
-  font: inherit;
-  color: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: inherit;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   text-decoration: none;
 }
-.footer-linklike:hover { color: var(--color-text-link); }
 .footer-linklike:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm); }
 
 /* ============================================================ COOKIE BANNER
