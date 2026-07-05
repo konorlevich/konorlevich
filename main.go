@@ -313,14 +313,9 @@ func servePDF() http.HandlerFunc {
 			pdf.Cell(40, 8, tr(fmt.Sprintf("From: %s to %s", exp.From, to)))
 			pdf.Ln(8)
 
-			pdf.Cell(40, 8, "Skills:")
-			pdf.Ln(6)
-			for _, skill := range exp.Skills {
-				pdf.Cell(40, 8, tr(fmt.Sprintf("- %s", skill)))
-				pdf.Ln(6)
-			}
+			pdf.Cell(40, 8, fmt.Sprintf("Skills: %s", tr(strings.Join(exp.Skills, ", "))))
+			pdf.Ln(8)
 
-			pdf.Ln(4)
 			pdf.Cell(40, 8, "Achievements:")
 			pdf.Ln(6)
 			for _, achievement := range exp.Achievements {
