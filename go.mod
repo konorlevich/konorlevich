@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	github.com/go-pdf/fpdf v0.9.0
+	github.com/resend/resend-go/v2 v2.28.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/svix/svix-webhooks v1.96.1

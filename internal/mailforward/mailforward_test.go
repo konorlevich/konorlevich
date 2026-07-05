@@ -59,13 +59,13 @@ func TestBuildForward(t *testing.T) {
 		t.Errorf("Subject = %q", msg.Subject)
 	}
 	// Reply-To must be the original sender so replies reach them directly.
-	if len(msg.ReplyTo) != 1 || msg.ReplyTo[0] != "Alice <alice@somewhere.com>" {
-		t.Errorf("ReplyTo = %v", msg.ReplyTo)
+	if msg.ReplyTo != "Alice <alice@somewhere.com>" {
+		t.Errorf("ReplyTo = %q", msg.ReplyTo)
 	}
-	if !strings.Contains(msg.HTML, "Forwarded from konorlevich.tech") {
+	if !strings.Contains(msg.Html, "Forwarded from konorlevich.tech") {
 		t.Error("HTML banner missing")
 	}
-	if !strings.Contains(msg.HTML, "<p>hello there</p>") {
+	if !strings.Contains(msg.Html, "<p>hello there</p>") {
 		t.Error("HTML body missing")
 	}
 	if !strings.Contains(msg.Text, "hello there") {
@@ -87,13 +87,13 @@ func TestBuildForwardEscapesAndAttachments(t *testing.T) {
 		Raw:         &rawDownload{DownloadURL: "https://dl.example/x.eml"},
 	})
 	// The sender string must be HTML-escaped in the banner (no raw "<vil>").
-	if strings.Contains(msg.HTML, "E<vil>") {
+	if strings.Contains(msg.Html, "E<vil>") {
 		t.Error("sender not HTML-escaped in banner")
 	}
-	if !strings.Contains(msg.HTML, "2 attachments not included") {
-		t.Errorf("attachment note missing: %s", msg.HTML)
+	if !strings.Contains(msg.Html, "2 attachments not included") {
+		t.Errorf("attachment note missing: %s", msg.Html)
 	}
-	if !strings.Contains(msg.HTML, "https://dl.example/x.eml") {
+	if !strings.Contains(msg.Html, "https://dl.example/x.eml") {
 		t.Error("raw download link missing")
 	}
 }
@@ -151,7 +151,7 @@ func TestBuildForwardTextOnly(t *testing.T) {
 		Subject: "hi",
 		Text:    &txt,
 	})
-	if !strings.Contains(msg.HTML, "plain body") {
+	if !strings.Contains(msg.Html, "plain body") {
 		t.Error("text-only message should be wrapped into HTML body")
 	}
 }

@@ -7,7 +7,6 @@
 package mailforward
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,12 +17,12 @@ import (
 	"strings"
 	"time"
 
+	resend "github.com/resend/resend-go/v2"
 	"github.com/sirupsen/logrus"
 	svix "github.com/svix/svix-webhooks/go"
 )
 
 const (
-	apiBase           = "https://api.resend.com"
 	maxWebhookBody    = 5 << 20 // 5 MiB — inbound webhook payload cap
 	requestTimeout    = 12 * time.Second
 	defaultSubjectTag = "[konorlevich.tech] "
@@ -66,7 +65,7 @@ func (c Config) Enabled() bool {
 type Forwarder struct {
 	cfg    Config
 	log    logrus.FieldLogger
-	client *http.Client
+	client *resend.Client
 	wh     *svix.Webhook // nil when no secret is configured
 }
 
@@ -78,7 +77,7 @@ func New(cfg Config, log logrus.FieldLogger) (*Forwarder, error) {
 	f := &Forwarder{
 		cfg:    cfg,
 		log:    log,
-		client: &http.Client{Timeout: 15 * time.Second},
+		client: resend.NewCustomClient(&http.Client{Timeout: 15 * time.Second}, cfg.APIKey),
 	}
 	if cfg.WebhookSecret != "" {
 		wh, err := svix.NewWebhook(cfg.WebhookSecret)
@@ -126,16 +125,6 @@ type attachment struct {
 type rawDownload struct {
 	DownloadURL string `json:"download_url"`
 	ExpiresAt   string `json:"expires_at"`
-}
-
-type sendRequest struct {
-	From    string            `json:"from"`
-	To      []string          `json:"to"`
-	Subject string            `json:"subject"`
-	HTML    string            `json:"html,omitempty"`
-	Text    string            `json:"text,omitempty"`
-	ReplyTo []string          `json:"reply_to,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
 }
 
 // --- handler ----------------------------------------------------------------
@@ -248,7 +237,7 @@ func domainOf(addr string) string {
 
 // buildForward turns a received email into the outbound forward request.
 // Exported behaviour is unit-tested; keep it pure (no I/O).
-func (f *Forwarder) buildForward(e receivedEmail) sendRequest {
+func (f *Forwarder) buildForward(e receivedEmail) *resend.SendEmailRequest {
 	banner := f.banner(e)
 
 	htmlBody := banner.html
@@ -265,22 +254,18 @@ func (f *Forwarder) buildForward(e receivedEmail) sendRequest {
 		textBody += "(HTML-only message — see the HTML version.)"
 	}
 
-	req := sendRequest{
+	req := &resend.SendEmailRequest{
 		From:    f.cfg.From,
 		To:      []string{f.cfg.To},
 		Subject: f.cfg.SubjectPrefix + e.Subject,
-		HTML:    htmlBody,
+		Html:    htmlBody,
 		Text:    textBody,
 	}
 	if e.From != "" {
-		req.ReplyTo = []string{e.From} // reply goes straight to the original sender
+		req.ReplyTo = e.From // reply goes straight to the original sender
 	}
-	headers := map[string]string{}
 	if e.MessageID != "" {
-		headers["X-Original-Message-Id"] = e.MessageID
-	}
-	if len(headers) > 0 {
-		req.Headers = headers
+		req.Headers = map[string]string{"X-Original-Message-Id": e.MessageID}
 	}
 	return req
 }
@@ -334,69 +319,45 @@ func (f *Forwarder) banner(e receivedEmail) banner {
 
 // --- Resend API calls -------------------------------------------------------
 
+// getReceivedEmail fetches the full inbound message from Resend's
+// Received-emails API. The resend-go SDK does not expose a typed method for
+// this endpoint yet, so we drive it through the SDK client's NewRequest/Perform
+// (reusing its auth, base URL and error handling).
 func (f *Forwarder) getReceivedEmail(ctx context.Context, id string) (receivedEmail, error) {
 	var out receivedEmail
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiBase+"/emails/receiving/"+id, nil)
+	req, err := f.client.NewRequest(ctx, http.MethodGet, "emails/receiving/"+id, nil)
 	if err != nil {
 		return out, err
 	}
-	req.Header.Set("Authorization", "Bearer "+f.cfg.APIKey)
 
 	start := time.Now()
 	f.log.WithField("email_id", id).Debug("resend: GET received email")
-	resp, err := f.client.Do(req)
-	if err != nil {
+	if _, err := f.client.Perform(req, &out); err != nil {
 		f.log.WithError(err).WithField("email_id", id).Error("resend: GET received email failed")
-		return out, err
+		return out, fmt.Errorf("resend get received email: %w", err)
 	}
-	defer resp.Body.Close()
-	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxWebhookBody))
 	f.log.WithFields(logrus.Fields{
 		"email_id":    id,
-		"status":      resp.StatusCode,
-		"bytes":       len(respBody),
 		"duration_ms": time.Since(start).Milliseconds(),
 	}).Debug("resend: GET received email response")
-	if resp.StatusCode != http.StatusOK {
-		return out, fmt.Errorf("resend get received email: status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
-	}
-	if err := json.Unmarshal(respBody, &out); err != nil {
-		return out, fmt.Errorf("resend get received email: decode: %w", err)
-	}
 	return out, nil
 }
 
-func (f *Forwarder) sendEmail(ctx context.Context, msg sendRequest) error {
-	payload, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiBase+"/emails", bytes.NewReader(payload))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+f.cfg.APIKey)
-	req.Header.Set("Content-Type", "application/json")
-
+func (f *Forwarder) sendEmail(ctx context.Context, msg *resend.SendEmailRequest) error {
 	start := time.Now()
 	f.log.WithFields(logrus.Fields{
 		"to":      msg.To,
 		"subject": msg.Subject,
 	}).Debug("resend: POST send email")
-	resp, err := f.client.Do(req)
+	resp, err := f.client.Emails.SendWithContext(ctx, msg)
 	if err != nil {
 		f.log.WithError(err).Error("resend: POST send email failed")
 		return err
 	}
-	defer resp.Body.Close()
-	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	f.log.WithFields(logrus.Fields{
 		"to":          msg.To,
-		"status":      resp.StatusCode,
+		"email_id":    resp.Id,
 		"duration_ms": time.Since(start).Milliseconds(),
 	}).Debug("resend: POST send email response")
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("resend send: status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
-	}
 	return nil
 }
