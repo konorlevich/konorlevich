@@ -504,3 +504,157 @@ strong { font-weight: var(--font-weight-semibold); }
   .hero-name { font-size: var(--font-size-4xl); }
   .hero-portrait { width: 240px; height: 240px; }
 }
+
+/* ================================================================== LEGAL
+   Privacy / cookies page: a single readable prose column in Warm Minimalism. */
+.legal { max-width: 44rem; }
+.legal-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  line-height: 1.15;
+  color: var(--color-text-primary);
+  margin: var(--space-3) 0 var(--space-7);
+}
+.legal-lead {
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-9);
+}
+.legal h2 {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  margin: var(--space-8) 0 var(--space-4);
+}
+.legal p {
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-5);
+}
+.legal a {
+  color: var(--color-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal a:hover { color: var(--color-accent-primary-hover); }
+.legal code {
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+  background-color: var(--color-bg-tertiary);
+  padding: 0.1em 0.35em;
+  border-radius: var(--border-radius-sm);
+}
+.legal-back { margin-top: var(--space-9); }
+
+/* Footer link that triggers JS (reopen consent) — looks like the other footer
+   links, but is a <button> for correct semantics. */
+.footer-linklike {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+.footer-linklike:hover { color: var(--color-text-link); }
+.footer-linklike:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm); }
+
+/* ============================================================ COOKIE BANNER
+   Non-blocking consent bar pinned to the bottom. Warm Minimalism: a warm card
+   lifting off the page. Both buttons share ONE treatment so neither choice is
+   visually favored (GDPR: reject must be as easy as accept). */
+.cookie-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: var(--space-6) 0 calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+  background-color: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-primary);
+  box-shadow: var(--shadow-lg);
+}
+.cookie-bar[hidden] { display: none; }
+
+/* Gentle rise on entrance. Under reduced-motion it appears without moving. */
+.cookie-bar.is-visible {
+  animation: cookie-bar-in var(--duration-slow) var(--easing-out) both;
+}
+@keyframes cookie-bar-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cookie-bar-inner {
+  display: flex;
+  flex-direction: column;         /* mobile-first: copy over buttons */
+  gap: var(--space-6);
+}
+.cookie-bar-copy { max-width: 62ch; }
+.cookie-bar-title {
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+.cookie-bar-desc {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.cookie-bar-desc a {
+  color: var(--color-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.cookie-bar-desc a:hover { color: var(--color-accent-primary-hover); }
+
+.cookie-bar-actions {
+  display: flex;
+  gap: var(--space-5);
+}
+.cookie-bar-actions .consent-btn { flex: 1 1 0; }   /* equal width on mobile */
+
+/* Equal-weight buttons — deliberately NOT the terracotta primary CTA, so the
+   site's "one real action" colour never steers this choice. Two identical
+   solids: clearly actionable, perfectly equal. */
+.consent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;                 /* touch target */
+  padding: var(--space-4) var(--space-7);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background-color: var(--color-bg-inverse);
+  border: 1px solid var(--color-bg-inverse);
+  border-radius: var(--cta-radius);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: box-shadow var(--duration-fast) var(--easing-default),
+              transform var(--duration-fast) var(--easing-default);
+}
+.consent-btn:hover { box-shadow: var(--shadow-md); }
+.consent-btn:active { transform: translateY(1px); }
+.consent-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+/* Desktop: single row — copy left, equal buttons right. */
+@media (min-width: 768px) {
+  .cookie-bar-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+  }
+  .cookie-bar-actions { flex: 0 0 auto; }
+  .cookie-bar-actions .consent-btn { flex: 0 0 auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cookie-bar.is-visible { animation: none; }
+}

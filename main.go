@@ -21,14 +21,16 @@ import (
 )
 
 const (
-	defaultConfigFilename = "config.yaml"
-	templateFilename      = "cv_template.html"
+	defaultConfigFilename   = "config.yaml"
+	templateFilename        = "cv_template.html"
+	privacyTemplateFilename = "privacy_template.html"
 )
 
 var (
-	cfg      config.Config
-	l        *log.Logger
-	pageTmpl *template.Template
+	cfg         config.Config
+	l           *log.Logger
+	pageTmpl    *template.Template
+	privacyTmpl *template.Template
 )
 
 // templateFuncs are helpers available inside cv_template.html.
@@ -105,6 +107,12 @@ func main() {
 		l.WithError(err).Fatal("failed to parse page template")
 	}
 
+	// Parse the privacy/cookies page template once at startup.
+	privacyTmpl, err = template.New(privacyTemplateFilename).Funcs(templateFuncs).ParseFiles(privacyTemplateFilename)
+	if err != nil {
+		l.WithError(err).Fatal("failed to parse privacy template")
+	}
+
 	appCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	defer stop()
 
@@ -112,6 +120,7 @@ func main() {
 	handler.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	handler.Handle("GET /", serveHTML())
 	handler.Handle("GET /cv", serveHTML())
+	handler.Handle("GET /privacy", servePrivacy())
 	handler.Handle("GET /cv/download", servePDF())
 	handler.Handle("POST /contact", submitContactForm())
 
@@ -226,6 +235,25 @@ func serveHTML() http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := pageTmpl.Execute(w, cvData); err != nil {
 			l.WithError(err).Error("can't generate page")
+			http.Error(w, "Could not generate page", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+// Serve the privacy / cookies page
+func servePrivacy() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cvData, err := readCV()
+		if err != nil {
+			l.WithError(err).Error("failed to read CV file")
+			http.Error(w, "Could not read CV", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if err := privacyTmpl.Execute(w, cvData); err != nil {
+			l.WithError(err).Error("can't generate privacy page")
 			http.Error(w, "Could not generate page", http.StatusInternalServerError)
 			return
 		}

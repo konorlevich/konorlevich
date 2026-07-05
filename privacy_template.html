@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics via Google Consent Mode v2 — same gate as the home page.
+         Shared bootstrap (single source of truth), blocking, before gtag/js. -->
+    <script src="/static/js/consent-default.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH8KWHKMPZ"></script>
+    <script defer src="/static/js/consent.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy &amp; Cookies — {{.Name}}</title>
+    <meta name="description" content="How {{.Name}}'s site uses cookies and Google Analytics, and how to control it.">
+    <meta name="theme-color" content="#faf7f2">
+    <meta name="robots" content="noindex">
+
+    <!-- Favicon: terracotta disc with initials -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23a8482a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' font-weight='700' fill='%23faf7f2' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
+
+    <link rel="preload" href="/static/fonts/Fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/static/css/fonts.css">
+    <link rel="stylesheet" href="/static/css/tokens.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+<!-- ================================================================ TOP BAR -->
+<header class="topbar">
+    <div class="container topbar-inner">
+        <a class="brand" href="/" aria-label="{{.Name}} — home">
+            <span class="mark" aria-hidden="true">{{initials .Name}}</span>
+            <span>{{.Name}}</span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+            <a href="/">Home</a>
+        </nav>
+        <a class="btn btn-primary btn-sm" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+    </div>
+</header>
+
+<main id="top">
+    <article class="section container legal" aria-labelledby="privacy-title">
+        <p class="eyebrow">Privacy &amp; cookies</p>
+        <h1 class="legal-title" id="privacy-title">What this site collects, and your choice</h1>
+
+        <p class="legal-lead">
+            This is a personal site. It doesn't sell anything, run ads, or build a profile of you.
+            The only thing it measures is anonymous, aggregate traffic — and only if you agree to it.
+        </p>
+
+        <h2>The one tool: Google Analytics</h2>
+        <p>
+            The site uses <strong>Google Analytics 4</strong> to understand roughly how many people
+            visit and which pages they read. When enabled, it collects things like the pages you view,
+            your approximate location (derived from your IP address, which Google does not log in full),
+            your device and browser type, and the site that referred you. It does <strong>not</strong>
+            see your name, email, or anything you type.
+        </p>
+
+        <h2>Cookies</h2>
+        <p>
+            Until you press <strong>Accept</strong>, Google Analytics runs in a cookieless mode and
+            <strong>no analytics cookies are set</strong>. If you accept, it stores a couple of
+            first-party cookies (<code>_ga</code> and <code>_ga_&lt;id&gt;</code>) used to tell
+            returning visits apart. These expire up to two years after your last visit. The only other
+            thing stored is your consent choice itself, kept in your browser's local storage so the
+            banner doesn't ask again — that never leaves your device.
+        </p>
+
+        <h2>Why it's off by default</h2>
+        <p>
+            Under the GDPR, analytics cookies need your <strong>consent</strong> (Article 6(1)(a)) —
+            so the default is <em>denied</em>, and nothing tracks you until you actively choose Accept.
+            Declining is exactly as easy as accepting, and costs you nothing: the site works the same
+            either way.
+        </p>
+
+        <h2>Changing your mind</h2>
+        <p>
+            You can switch at any time. Use the <strong>“Cookie settings”</strong> link in the footer
+            of any page to reopen the banner and choose again. Choosing Decline stops any further
+            analytics cookies; you can also clear cookies for this site in your browser to remove
+            existing ones.
+        </p>
+
+        <h2>Who else is involved</h2>
+        <p>
+            Google acts as the data processor for the analytics described above; you can read
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's privacy policy</a>
+            for how they handle it. No other third parties, trackers, or advertising networks are used.
+        </p>
+
+        <h2>Questions</h2>
+        <p>
+            Anything unclear, or want your data removed? Email me at
+            <a href="mailto:{{.Email}}?subject=Privacy%20question">{{.Email}}</a>.
+        </p>
+
+        <p class="legal-back">
+            <a class="link-arrow" href="/"><span class="arrow" aria-hidden="true">←</span> Back to home</a>
+        </p>
+    </article>
+</main>
+
+<!-- ================================================================== FOOTER -->
+<footer class="footer">
+    <div class="container footer-inner">
+        {{if .Links}}
+        <nav class="footer-links" aria-label="Elsewhere">
+            {{range .Links}}<a href="{{.URL}}"{{if not (eq .Name "Email")}} target="_blank" rel="noopener noreferrer"{{end}}>{{.Name}}</a>{{end}}
+            <button type="button" class="footer-linklike" data-consent-reopen>Cookie settings</button>
+        </nav>
+        {{end}}
+        <p class="footer-note">Built by <span class="sig">{{.Name}}</span> · {{.Location}}</p>
+    </div>
+</footer>
+
+<!-- ============================================================ COOKIE BANNER -->
+<aside class="cookie-bar" id="cookie-bar"
+       aria-labelledby="cookie-bar-title" aria-describedby="cookie-bar-desc" hidden>
+    <div class="container cookie-bar-inner">
+        <div class="cookie-bar-copy">
+            <p class="cookie-bar-title" id="cookie-bar-title">A note on cookies</p>
+            <p class="cookie-bar-desc" id="cookie-bar-desc">
+                This site uses Google Analytics to understand its traffic. It stays off until you say yes —
+                your call. <a href="/privacy">What this means</a>.
+            </p>
+        </div>
+        <div class="cookie-bar-actions">
+            <button type="button" class="consent-btn" data-consent="granted">Accept</button>
+            <button type="button" class="consent-btn" data-consent="denied">Decline</button>
+        </div>
+    </div>
+</aside>
+
+</body>
+</html>

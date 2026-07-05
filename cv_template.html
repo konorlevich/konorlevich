@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
+    <!-- Google Analytics via Google Consent Mode v2. analytics_storage defaults to
+         DENIED: the GA library loads but sets no cookies until the visitor accepts.
+         The bootstrap below (blocking, single source of truth) MUST run before
+         gtag/js. Consent is gated by /static/js/consent.js and the bottom bar. -->
+    <script src="/static/js/consent-default.js"></script>
+    <!-- GA library: honors the consent state set by the bootstrap above. -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RH8KWHKMPZ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-
-        gtag('config', 'G-RH8KWHKMPZ');
-    </script>
+    <!-- Consent state manager (owns the stored choice + the consent bar wiring). -->
+    <script defer src="/static/js/consent.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Name}} — Software Engineer</title>
@@ -203,11 +203,33 @@
         {{if .Links}}
         <nav class="footer-links" aria-label="Elsewhere">
             {{range .Links}}<a href="{{.URL}}"{{if not (eq .Name "Email")}} target="_blank" rel="noopener noreferrer"{{end}}>{{.Name}}</a>{{end}}
+            <button type="button" class="footer-linklike" data-consent-reopen>Cookie settings</button>
         </nav>
         {{end}}
         <p class="footer-note">Built by <span class="sig">{{.Name}}</span> · {{.Location}}</p>
     </div>
 </footer>
+
+<!-- ============================================================ COOKIE BANNER
+     A non-modal complementary landmark (native <aside>): the page stays usable
+     while it's open and focus is never trapped. Hidden by default; revealed by
+     /static/js/consent.js only when there is no stored, still-valid choice. -->
+<aside class="cookie-bar" id="cookie-bar"
+       aria-labelledby="cookie-bar-title" aria-describedby="cookie-bar-desc" hidden>
+    <div class="container cookie-bar-inner">
+        <div class="cookie-bar-copy">
+            <p class="cookie-bar-title" id="cookie-bar-title">A note on cookies</p>
+            <p class="cookie-bar-desc" id="cookie-bar-desc">
+                This site uses Google Analytics to understand its traffic. It stays off until you say yes —
+                your call. <a href="/privacy">What this means</a>.
+            </p>
+        </div>
+        <div class="cookie-bar-actions">
+            <button type="button" class="consent-btn" data-consent="granted">Accept</button>
+            <button type="button" class="consent-btn" data-consent="denied">Decline</button>
+        </div>
+    </div>
+</aside>
 
 </body>
 </html>
