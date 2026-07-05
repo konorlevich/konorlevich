@@ -7,12 +7,18 @@
     <meta name="description" content="{{.Name}} — software engineer with 8+ years in product and infrastructure teams. Based in {{.Location}}. {{.Availability}}.">
     <meta name="theme-color" content="#faf7f2">
 
-    <!-- Open Graph / social preview (both audiences share the link) -->
+    <!-- Open Graph / social preview (both audiences share the link).
+         Absolute URLs — LinkedIn and other scrapers don't resolve relative og:image. -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://konorlevich.tech/">
     <meta property="og:title" content="{{.Name}} — Software Engineer">
     <meta property="og:description" content="8+ years building reliable software & shipping products. {{.Location}} · {{.Availability}}.">
-    <meta name="twitter:card" content="summary">
-    <!-- Optional: add /static/img/og.png (1200×630) and an <meta property="og:image"> tag -->
+    <meta property="og:image" content="https://konorlevich.tech/static/img/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{.Name}} — Software Engineer. {{.Tagline}}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://konorlevich.tech/static/img/og.png">
 
     <!-- Favicon: terracotta disc with initials -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23a8482a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' font-weight='700' fill='%23faf7f2' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
@@ -138,7 +144,10 @@
             <article class="project-card">
                 <div class="project-shot">
                     {{if .Screenshot}}
-                    <img src="{{.Screenshot}}" alt="Screenshot of {{.Name}}" loading="lazy">
+                    <picture>
+                        <source srcset="{{webpOf .Screenshot}}" type="image/webp">
+                        <img src="{{.Screenshot}}" alt="Screenshot of the {{.Name}} website" width="960" height="600" loading="lazy">
+                    </picture>
                     {{else}}
                     <div class="project-shot-placeholder" aria-hidden="true">{{.Name}}</div>
                     {{end}}

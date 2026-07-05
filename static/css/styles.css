@@ -286,6 +286,13 @@ strong { font-weight: var(--font-weight-semibold); }
   padding-top: var(--space-8);
   border-top: 1px solid var(--color-border-secondary);
 }
+/* Small phones: pair the two short chips 2-up and let the long availability
+   chip take its own full-width row — two tidy lines instead of three. */
+@media (max-width: 479px) {
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .facts .chip { justify-content: flex-start; }
+  .facts .chip-available { order: 3; grid-column: 1 / -1; }
+}
 
 /* ------------------------------------------------------------- EXPERIENCE */
 .exp-list { display: flex; flex-direction: column; gap: var(--space-9); }

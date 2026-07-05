@@ -250,7 +250,33 @@ func servePDF() http.HandlerFunc {
 		// Name
 		pdf.SetFont("Arial", "B", 16)
 		pdf.Cell(40, 10, tr(cv.Name))
-		pdf.Ln(10)
+		pdf.Ln(9)
+
+		// Location · Availability · Languages — one quiet meta line
+		meta := make([]string, 0, 3)
+		if cv.Location != "" {
+			meta = append(meta, cv.Location)
+		}
+		if cv.Availability != "" {
+			meta = append(meta, cv.Availability)
+		}
+		if len(cv.Languages) > 0 {
+			meta = append(meta, strings.Join(cv.Languages, ", "))
+		}
+		if len(meta) > 0 {
+			pdf.SetFont("Arial", "", 11)
+			pdf.SetTextColor(107, 99, 87) // warm secondary
+			pdf.MultiCell(190, 6, tr(strings.Join(meta, "  ·  ")), "", "L", false)
+			pdf.SetTextColor(0, 0, 0)
+		}
+
+		// Summary paragraph
+		if cv.Summary != "" {
+			pdf.Ln(1)
+			pdf.SetFont("Arial", "", 11)
+			pdf.MultiCell(190, 6, tr(cv.Summary), "", "L", false)
+		}
+		pdf.Ln(4)
 
 		// Links section — rendered as clickable hyperlinks
 		pdf.SetFont("Arial", "B", 14)
@@ -301,6 +327,33 @@ func servePDF() http.HandlerFunc {
 				pdf.MultiCell(190, 6, tr(fmt.Sprintf("- %s", achievement)), "", "", false)
 			}
 			pdf.Ln(8)
+		}
+
+		// Projects
+		if len(cv.Projects) > 0 {
+			pdf.SetFont("Arial", "B", 14)
+			pdf.Cell(40, 10, "Projects")
+			pdf.Ln(10)
+			for _, p := range cv.Projects {
+				title := p.Name
+				if p.Badge != "" {
+					title = fmt.Sprintf("%s (%s)", p.Name, p.Badge)
+				}
+				pdf.SetFont("Arial", "B", 12)
+				pdf.Cell(40, 8, tr(title))
+				pdf.Ln(6)
+				if p.URL != "" {
+					pdf.SetFont("Arial", "U", 11)
+					pdf.SetTextColor(168, 72, 42) // terracotta accent
+					pdf.CellFormat(0, 6, tr(p.URL), "", 1, "L", false, 0, p.URL)
+					pdf.SetTextColor(0, 0, 0)
+				}
+				if p.Description != "" {
+					pdf.SetFont("Arial", "", 11)
+					pdf.MultiCell(190, 6, tr(p.Description), "", "L", false)
+				}
+				pdf.Ln(4)
+			}
 		}
 
 		// Serve inline with a sensible filename if saved.
