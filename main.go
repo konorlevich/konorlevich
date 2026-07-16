@@ -148,6 +148,7 @@ func main() {
 	handler.Handle("GET /cv", serveHTML())
 	handler.Handle("GET /privacy", servePrivacy())
 	handler.Handle("GET /cv/download", servePDF())
+	handler.Handle("GET /cv/download.md", serveMarkdown())
 	handler.Handle("POST /contact", submitContactForm())
 
 	// Inbound email forwarding (Resend webhook → forward to FORWARD_TO).
@@ -415,6 +416,120 @@ func servePDF() http.HandlerFunc {
 	}
 }
 
+// Serve the CV as Markdown
+func serveMarkdown() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cvData, err := readCV()
+		if err != nil {
+			l.WithError(err).Error("failed to read CV file")
+			http.Error(w, "Could not read CV", http.StatusInternalServerError)
+			return
+		}
+
+		md := renderMarkdown(cvData)
+
+		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		w.Header().Set("Content-Disposition",
+			fmt.Sprintf("inline; filename=%q", strings.ReplaceAll(cvData.Name, " ", "-")+"-CV.md"))
+		if _, err := w.Write([]byte(md)); err != nil {
+			l.WithError(err).Error("failed to write markdown CV")
+		}
+	}
+}
+
+// renderMarkdown builds a Markdown document from the CV data.
+func renderMarkdown(cv cv.CV) string {
+	var b strings.Builder
+
+	// Name heading
+	fmt.Fprintf(&b, "# %s\n\n", cv.Name)
+
+	if cv.Tagline != "" {
+		fmt.Fprintf(&b, "_%s_\n\n", cv.Tagline)
+	}
+
+	// Location · Availability · Languages — one quiet meta line
+	meta := make([]string, 0, 3)
+	if cv.Location != "" {
+		meta = append(meta, cv.Location)
+	}
+	if cv.Availability != "" {
+		meta = append(meta, cv.Availability)
+	}
+	if len(cv.Languages) > 0 {
+		meta = append(meta, strings.Join(cv.Languages, ", "))
+	}
+	if len(meta) > 0 {
+		fmt.Fprintf(&b, "%s\n\n", strings.Join(meta, " · "))
+	}
+
+	if cv.Summary != "" {
+		fmt.Fprintf(&b, "%s\n\n", cv.Summary)
+	}
+
+	// Links
+	if len(cv.Links) > 0 {
+		b.WriteString("## Links\n\n")
+		for _, link := range cv.Links {
+			display := strings.TrimPrefix(link.URL, "mailto:")
+			fmt.Fprintf(&b, "- **%s:** [%s](%s)\n", link.Name, display, link.URL)
+		}
+		b.WriteString("\n")
+	}
+
+	// Skills
+	if len(cv.Skills) > 0 {
+		b.WriteString("## Skills\n\n")
+		for _, s := range cv.Skills {
+			fmt.Fprintf(&b, "- **%s:** %s\n", s.Category, strings.Join(s.Items, ", "))
+		}
+		b.WriteString("\n")
+	}
+
+	// Work Experience
+	if len(cv.WorkExperience) > 0 {
+		b.WriteString("## Work Experience\n\n")
+		for _, exp := range cv.WorkExperience {
+			to := exp.To
+			if to == "" {
+				to = "Present"
+			}
+			fmt.Fprintf(&b, "### %s — %s\n\n", exp.Company, exp.Role)
+			fmt.Fprintf(&b, "_%s – %s_\n\n", exp.From, to)
+			if len(exp.Skills) > 0 {
+				fmt.Fprintf(&b, "**Skills:** %s\n\n", strings.Join(exp.Skills, ", "))
+			}
+			if len(exp.Achievements) > 0 {
+				b.WriteString("**Achievements:**\n\n")
+				for _, achievement := range exp.Achievements {
+					fmt.Fprintf(&b, "- %s\n", achievement)
+				}
+				b.WriteString("\n")
+			}
+		}
+	}
+
+	// Projects
+	if len(cv.Projects) > 0 {
+		b.WriteString("## Projects\n\n")
+		for _, p := range cv.Projects {
+			title := p.Name
+			if p.Badge != "" {
+				title = fmt.Sprintf("%s (%s)", p.Name, p.Badge)
+			}
+			fmt.Fprintf(&b, "### %s\n\n", title)
+			if p.URL != "" {
+				fmt.Fprintf(&b, "[%s](%s)\n\n", p.URL, p.URL)
+			}
+			if p.Description != "" {
+				fmt.Fprintf(&b, "%s\n\n", p.Description)
+			}
+		}
+	}
+
+	return strings.TrimRight(b.String(), "\n") + "\n"
+}
+
 // Read CV YAML file
 func readCV() (cv.CV, error) {
 	var cv cv.CV
@@ -425,16 +540,3 @@ func readCV() (cv.CV, error) {
 	err = yaml.Unmarshal(data, &cv)
 	return cv, err
 }
-
-//// Send email using SMTP
-//func sendEmail(email, link, position string) error {
-//	auth := smtp.PlainAuth("", cfg.SMTP.Username, cfg.SMTP.Password, cfg.SMTP.Server)
-//	to := []string{cfg.SMTP.From}
-//	subject := "New Job Opportunity"
-//	body := fmt.Sprintf("Email: %s\nLink: %s\nPosition: %s", email, link, position)
-//	msg := []byte("To: " + cfg.SMTP.From + "\r\n" +
-//		"Subject: " + subject + "\r\n" +
-//		"\r\n" + body + "\r\n")
-//	err := smtp.SendMail(fmt.Sprintf("%s:%d", cfg.SMTP.Server, cfg.SMTP.Port), auth, cfg.SMTP.From, to, msg)
-//	return err
-//}
