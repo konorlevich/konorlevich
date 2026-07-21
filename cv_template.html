@@ -144,7 +144,13 @@
         <p class="contact-sub">Whether you're hiring or just want to say hello — the fastest way to reach me is email.</p>
         <div class="contact-actions">
             <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
-            <a class="btn btn-ghost" href="/cv/download">Download CV</a>
+            <details class="dl-menu">
+                <summary class="btn btn-ghost" aria-haspopup="menu">Download CV <span class="dl-caret" aria-hidden="true">▾</span></summary>
+                <div class="dl-menu-list" role="menu" aria-label="Download format">
+                    <a role="menuitem" href="/cv/download">PDF document <span class="dl-ext" aria-hidden="true">.pdf</span></a>
+                    <a role="menuitem" href="/cv/download.md">Markdown <span class="dl-ext" aria-hidden="true">.md</span></a>
+                </div>
+            </details>
         </div>
     </section>
 

@@ -352,7 +352,63 @@ strong { font-weight: var(--font-weight-semibold); }
 .contact-title { font-size: var(--font-size-2xl); }
 .contact-sub { margin: var(--space-6) auto var(--space-8); color: var(--color-text-secondary);
   font-size: var(--font-size-md); max-width: 40ch; }
-.contact-actions { display: flex; flex-wrap: wrap; gap: var(--space-5); justify-content: center; }
+.contact-actions { display: flex; flex-wrap: wrap; gap: var(--space-5); justify-content: center; align-items: center; }
+
+/* ------------------------------------------------- DOWNLOAD DROPDOWN
+   Native <details> menu offering the CV in PDF or Markdown. No JS: the
+   <summary> toggles it; the two links sit on a lifted card, styled for
+   readable contrast in both light and dark themes. */
+.dl-menu { position: relative; display: inline-block; }
+.dl-menu > summary {
+  list-style: none;          /* strip the default disclosure triangle */
+  cursor: pointer;
+}
+.dl-menu > summary::-webkit-details-marker { display: none; }
+.dl-menu > summary::marker { content: ""; }
+.dl-caret {
+  font-size: 0.8em;
+  transition: transform var(--duration-fast) var(--easing-default);
+}
+.dl-menu[open] > summary .dl-caret { transform: rotate(180deg); }
+
+.dl-menu-list {
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 14rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+}
+.dl-menu-list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text-primary);          /* full-contrast label */
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+}
+.dl-menu-list a:hover,
+.dl-menu-list a:focus-visible {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-link);
+}
+.dl-ext {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);          /* AA on the card in both themes */
+}
 
 /* ---------------------------------------------------------------- FOOTER */
 .footer {
