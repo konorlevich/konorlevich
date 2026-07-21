@@ -379,33 +379,6 @@ func servePDF() http.HandlerFunc {
 			pdf.Ln(8)
 		}
 
-		// Projects
-		if len(cv.Projects) > 0 {
-			pdf.SetFont("Arial", "B", 14)
-			pdf.Cell(40, 10, "Projects")
-			pdf.Ln(10)
-			for _, p := range cv.Projects {
-				title := p.Name
-				if p.Badge != "" {
-					title = fmt.Sprintf("%s (%s)", p.Name, p.Badge)
-				}
-				pdf.SetFont("Arial", "B", 12)
-				pdf.Cell(40, 8, tr(title))
-				pdf.Ln(6)
-				if p.URL != "" {
-					pdf.SetFont("Arial", "U", 11)
-					pdf.SetTextColor(168, 72, 42) // terracotta accent
-					pdf.CellFormat(0, 6, tr(p.URL), "", 1, "L", false, 0, p.URL)
-					pdf.SetTextColor(0, 0, 0)
-				}
-				if p.Description != "" {
-					pdf.SetFont("Arial", "", 11)
-					pdf.MultiCell(190, 6, tr(p.Description), "", "L", false)
-				}
-				pdf.Ln(4)
-			}
-		}
-
 		// Serve inline with a sensible filename if saved.
 		w.Header().Set("Content-Type", "application/pdf")
 		w.Header().Set("Content-Disposition",
@@ -505,24 +478,6 @@ func renderMarkdown(cv cv.CV) string {
 					fmt.Fprintf(&b, "- %s\n", achievement)
 				}
 				b.WriteString("\n")
-			}
-		}
-	}
-
-	// Projects
-	if len(cv.Projects) > 0 {
-		b.WriteString("## Projects\n\n")
-		for _, p := range cv.Projects {
-			title := p.Name
-			if p.Badge != "" {
-				title = fmt.Sprintf("%s (%s)", p.Name, p.Badge)
-			}
-			fmt.Fprintf(&b, "### %s\n\n", title)
-			if p.URL != "" {
-				fmt.Fprintf(&b, "[%s](%s)\n\n", p.URL, p.URL)
-			}
-			if p.Description != "" {
-				fmt.Fprintf(&b, "%s\n\n", p.Description)
 			}
 		}
 	}

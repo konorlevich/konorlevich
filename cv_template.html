@@ -21,7 +21,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://konorlevich.tech/">
     <meta property="og:title" content="{{.Name}} — Software Engineer">
-    <meta property="og:description" content="8+ years building reliable software & shipping products. {{.Location}} · {{.Availability}}.">
+    <meta property="og:description" content="8+ years building and shipping reliable software. {{.Location}} · {{.Availability}}.">
     <meta property="og:image" content="https://konorlevich.tech/static/img/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -50,7 +50,6 @@
         </a>
         <nav class="nav-links" aria-label="Primary">
             <a href="#experience">Experience</a>
-            <a href="#work">Work</a>
             <a href="/cv/download">CV</a>
         </nav>
         <a class="btn btn-primary btn-sm" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
@@ -79,7 +78,7 @@
                 <p class="hero-intro">{{.Intro}}</p>
                 <div class="hero-actions">
                     <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
-                    <a class="btn btn-ghost" href="#work">See my work</a>
+                    <a class="btn btn-ghost" href="#experience">See my experience</a>
                 </div>
             </div>
         </div>
@@ -139,56 +138,10 @@
         </div>
     </section>
 
-    <!-- ================================================================ WORK -->
-    {{if .Projects}}
-    <section class="section container" id="work" aria-labelledby="work-title">
-        <div class="section-head">
-            <p class="section-eyebrow">Things I've built</p>
-            <h2 class="section-title" id="work-title">Work with me</h2>
-            <p class="section-intro">A few sites and products I've built — for clients and for myself. Every one is live.</p>
-        </div>
-
-        <div class="projects">
-            {{range .Projects}}
-            <article class="project-card">
-                <div class="project-shot">
-                    {{if .Screenshot}}
-                    <picture>
-                        <source srcset="{{webpOf .Screenshot}}" type="image/webp">
-                        <img src="{{.Screenshot}}" alt="Screenshot of the {{.Name}} website" width="960" height="600" loading="lazy">
-                    </picture>
-                    {{else}}
-                    <div class="project-shot-placeholder" aria-hidden="true">{{.Name}}</div>
-                    {{end}}
-                </div>
-                <div class="project-body">
-                    <div class="project-top">
-                        <h3 class="project-name">{{.Name}}</h3>
-                        {{if .Badge}}<span class="project-badge">{{.Badge}}</span>{{end}}
-                    </div>
-                    <p class="project-desc">{{.Description}}</p>
-                    <a class="link-arrow project-link" href="{{.URL}}" target="_blank" rel="noopener noreferrer">
-                        Visit site <span class="arrow" aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </article>
-            {{end}}
-        </div>
-
-        <div class="work-nudge">
-            <div class="work-nudge-text">
-                <h3>Want something like this?</h3>
-                <p>If you need a website or a piece of software built and looked after, I'd be glad to help.</p>
-            </div>
-            <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Project%20inquiry">Let's talk</a>
-        </div>
-    </section>
-    {{end}}
-
     <!-- ============================================================= CONTACT -->
     <section class="section container contact" id="contact" aria-labelledby="contact-title">
-        <h2 class="contact-title" id="contact-title">Let's build something</h2>
-        <p class="contact-sub">Whether you're hiring or have a project in mind — the fastest way to reach me is email.</p>
+        <h2 class="contact-title" id="contact-title">Let's talk</h2>
+        <p class="contact-sub">Whether you're hiring or just want to say hello — the fastest way to reach me is email.</p>
         <div class="contact-actions">
             <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
             <a class="btn btn-ghost" href="/cv/download">Download CV</a>

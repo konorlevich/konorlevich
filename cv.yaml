@@ -5,7 +5,7 @@
 name: "Petr Travkin"
 tagline: "I build reliable software — and help people ship it."
 intro: "Self-taught software engineer with 10 years across product and infrastructure teams. I like turning messy systems into calm, dependable ones — and I get the most joy when the result visibly changes someone's experience."
-summary: "Software engineer with a self-taught background and 8 years of international experience across product and infrastructure teams. I've designed internal platforms and release pipelines used by hundreds of services, shipped my own products end to end, and now work on payment systems."
+summary: "Software engineer with a self-taught background and 8 years of international experience across product and infrastructure teams. I've designed internal platforms and release pipelines used by hundreds of services, and now work on payment systems."
 location: "Tbilisi, Georgia"
 availability: "Open to remote or relocation"
 languages:
@@ -77,24 +77,3 @@ work_experience:
     achievements:
       - "Led a team of three and split a monolith into microservices, cutting API response time 10× — from 2s to 0.2s."
       - "Integrated 20+ partner platforms into the company's core integration system and kept them running."
-projects:
-  - name: "Speakadoo"
-    url: "https://speakadoo.club"
-    description: "A multilingual website (Georgian, English, Russian) for an English-language school for young children in Tbilisi — warm and welcoming for kids and parents alike."
-    screenshot: "/static/img/proj-speakadoo.jpg"
-    badge: "Client site"
-  - name: "Kids Space"
-    url: "https://kidsspace.ge/"
-    description: "A multilingual website (Georgian, English, Russian) for a kindergarten in Tbilisi — warm, clear, and easy for parents to navigate."
-    screenshot: "/static/img/proj-kidsspace.jpg"   # served with a .webp sibling via <picture>
-    badge: "Client site"
-  - name: "AI News"
-    url: "https://ai-news.ge"
-    description: "A Georgian-language platform that publishes the latest AI news for local readers. Built and run end to end."
-    screenshot: "/static/img/proj-ainews.jpg"
-    badge: "Own product"
-  - name: "Chat Structure Helper"
-    url: "https://tgchathelperbot.tech"
-    description: "A no-code Telegram bot that auto-organizes group chats — topics, permissions, and welcome templates — via a visual builder. EN/RU/ES."
-    screenshot: "/static/img/proj-chathelper.jpg"
-    badge: "Own product"

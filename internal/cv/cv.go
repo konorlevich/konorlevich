@@ -13,7 +13,6 @@ type CV struct {
 	Links          []Link       `yaml:"links"`
 	Skills         []Skill      `yaml:"skills"`
 	WorkExperience []Experience `yaml:"work_experience"`
-	Projects       []Project    `yaml:"projects"`
 }
 
 type Link struct {
@@ -33,12 +32,4 @@ type Experience struct {
 	To           string   `yaml:"to,omitempty"` // End date, optional
 	Skills       []string `yaml:"skills"`
 	Achievements []string `yaml:"achievements"`
-}
-
-type Project struct {
-	Name        string `yaml:"name"`
-	URL         string `yaml:"url"`
-	Description string `yaml:"description"`
-	Screenshot  string `yaml:"screenshot,omitempty"` // path under /static/img, optional
-	Badge       string `yaml:"badge,omitempty"`      // e.g. "Client site", "Own product"
 }
