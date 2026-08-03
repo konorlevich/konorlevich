@@ -428,6 +428,7 @@ strong { font-weight: var(--font-weight-semibold); }
 .footer-links a:hover, .footer-linklike:hover { color: var(--color-accent-primary); }
 .footer-note { color: var(--color-text-tertiary); font-size: var(--font-size-sm); }
 .footer-note .sig { color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
+.footer-note a.sig:hover { color: var(--color-accent-primary); }
 
 /* =====================================================================
    RESPONSIVE  —  md (768px)
