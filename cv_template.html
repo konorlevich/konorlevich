@@ -32,6 +32,44 @@
     <!-- Favicon: terracotta disc with initials -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23a8482a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' font-weight='700' fill='%23faf7f2' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
 
+    <!-- Structured data as an @graph: the site, who built it, and who it's about.
+         "Visible truth" — every value below is rendered somewhere on this page,
+         and the creator credit matches the visible footer link. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://konorlevich.tech/#website",
+          "url": "https://konorlevich.tech/",
+          "name": "{{.Name}} — Software Engineer",
+          "inLanguage": "en",
+          "about": { "@id": "https://konorlevich.tech/#person" },
+          "creator": {
+            "@type": "Organization",
+            "@id": "https://soarline.studio/#organization",
+            "name": "Soarline Studio",
+            "url": "https://soarline.studio/"
+          },
+          "creditText": "Website created by Soarline Studio"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://konorlevich.tech/#person",
+          "name": "{{.Name}}",
+          "url": "https://konorlevich.tech/",
+          "jobTitle": "Software Engineer",
+          "description": "{{.Tagline}}",
+          "address": "{{.Location}}",
+          "email": "{{.Email}}",{{if .Photo}}
+          "image": "https://konorlevich.tech{{.Photo}}",{{end}}
+          "sameAs": [{{$first := true}}{{range .Links}}{{if ne .Name "Email"}}{{if not $first}}, {{end}}"{{.URL}}"{{$first = false}}{{end}}{{end}}]
+        }
+      ]
+    }
+    </script>
+
     <!-- Fonts: preload the above-the-fold families, then stylesheets in order -->
     <link rel="preload" href="/static/fonts/Fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/static/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
