@@ -106,10 +106,15 @@ func NewRenderer(assets *Assets, cfg site.Config, content cv.CV) *Renderer {
 func (r *Renderer) specs() []pageSpec {
 	return []pageSpec{
 		{
-			path:        "/",
-			file:        "home.html",
-			title:       r.cv.Name + " — Software Engineer",
-			description: r.cv.Name + " — software engineer with 8+ years in product and infrastructure teams. Based in " + r.cv.Location + ". " + r.cv.Availability + ".",
+			path:  "/",
+			file:  "home.html",
+			title: r.cv.Name + " — Software Engineer",
+			// Derived from cv.yaml, never restated here: a hardcoded years
+			// figure drifts the moment the CV is updated, and this string is
+			// what search results and link previews show.
+			// The name is already in the title; repeating it here only bought a
+			// second em dash in the same sentence.
+			description: r.cv.Tagline + " Based in " + r.cv.Location + ". " + r.cv.Availability + ".",
 			ogType:      "website",
 			isHome:      true,
 			inSitemap:   true,

@@ -20,7 +20,7 @@
                 <span class="theme-toggle-icon" aria-hidden="true"></span>
                 <span data-theme-label>Auto</span>
             </button>
-            <a class="btn btn-primary btn-sm" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+            <a class="btn btn-primary btn-sm" href="mailto:{{.Email}}">Email me</a>
         </div>
     </div>
 </header>
@@ -38,6 +38,12 @@
             {{- end}}
         </nav>
         {{- end}}
+        <!-- Colophon: the page's own strongest evidence, stated once, quietly.
+             Every claim here is literally true of the process serving this
+             response — see README.md. It sits above the creator credit and
+             must never crowd it. -->
+        <p class="colophon">This site is a single self-contained Go binary. Every page is rendered at
+            boot, and the same binary receives and forwards its own mail.</p>
         <p class="footer-note">Website created by
             <a class="sig" href="https://soarline.studio/" target="_blank" rel="noopener noreferrer">Soarline Studio</a></p>
     </div>

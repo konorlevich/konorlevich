@@ -146,7 +146,10 @@ func (s *Server) serveDocument(path string) http.HandlerFunc {
 	blob := s.blobs[path]
 	name := s.documentNames[path]
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", name))
+		// attachment, not inline: every control pointing here is labelled
+		// "Download". Inline sent mobile readers out of the page into a
+		// full-screen PDF viewer, and made .md behave differently per browser.
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name))
 		blob.Serve(w, r, http.StatusOK)
 	}
 }

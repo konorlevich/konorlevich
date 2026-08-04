@@ -53,12 +53,12 @@
             {{end}}
         </div>
         <div class="hero-text">
-            <p class="hero-eyebrow">Software Engineer · {{.Location}}</p>
+            <p class="hero-eyebrow">Software Engineer{{if .Location}} · {{.Location}}{{end}}</p>
             <h1 class="hero-name" id="hero-name">{{.Name}}</h1>
             <p class="hero-tagline">{{.Tagline}}</p>
             <p class="hero-intro">{{.Intro}}</p>
             <div class="hero-actions">
-                <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+                <a class="btn btn-primary" href="mailto:{{.Email}}">Email me</a>
                 <a class="btn btn-ghost" href="#experience">See my experience</a>
             </div>
         </div>
@@ -67,7 +67,7 @@
     <!-- Facts row -->
     <div class="facts" aria-label="At a glance">
         <span class="chip"><span class="dot" aria-hidden="true"></span>{{.Location}}</span>
-        <span class="chip chip-available"><span class="dot" aria-hidden="true"></span>{{.Availability}}</span>
+        {{if .Availability}}<span class="chip chip-available"><span class="dot" aria-hidden="true"></span>{{.Availability}}</span>{{end}}
         {{if .Languages}}<span class="chip"><span class="dot" aria-hidden="true"></span>{{join .Languages}}</span>{{end}}
     </div>
 </section>
@@ -77,9 +77,9 @@
     <div class="section-head">
         <p class="section-eyebrow">The résumé, briefly</p>
         <h2 class="section-title" id="experience-title">Experience</h2>
-        <p class="section-intro">Eight-plus years building and shipping software with international product and infrastructure teams.</p>
     </div>
 
+    {{if .WorkExperience}}
     <div class="exp-list">
         {{range .WorkExperience}}
         <article class="exp-item">
@@ -100,6 +100,7 @@
         </article>
         {{end}}
     </div>
+    {{end}}
 
     {{if .Skills}}
     <div class="skills skills-block">
@@ -122,9 +123,9 @@
 <!-- ============================================================= CONTACT -->
 <section class="section container contact" id="contact" aria-labelledby="contact-title">
     <h2 class="contact-title" id="contact-title">Let's talk</h2>
-    <p class="contact-sub">Whether you're hiring or just want to say hello — the fastest way to reach me is email.</p>
+    <p class="contact-sub">If you're hiring, email is the fastest way to reach me. I read everything and reply within a day or two.</p>
     <div class="contact-actions">
-        <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+        <a class="btn btn-primary" href="mailto:{{.Email}}">Email me</a>
         <details class="dl-menu">
             <summary class="btn btn-ghost" aria-haspopup="menu">Download CV <span class="dl-caret" aria-hidden="true">▾</span></summary>
             <div class="dl-menu-list" role="menu" aria-label="Download format">
@@ -133,5 +134,10 @@
             </div>
         </details>
     </div>
+    <!-- The address as selectable text, not only as an href: when no mail client
+         is configured the mailto: buttons above do nothing, and this is the only
+         thing left to copy. It also keeps the JSON-LD "email" value visible on
+         the page, which the "visible truth" rule at the top of this file requires. -->
+    <p class="contact-email"><a href="mailto:{{.Email}}">{{.Email}}</a></p>
 </section>
 {{- end}}
