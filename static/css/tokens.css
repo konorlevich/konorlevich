@@ -10,9 +10,10 @@
    Format: CSS custom properties (portable; consumed by Go html/template).
    Usage:  reference these tokens in component CSS — never hardcode raw values.
 
-   NOTE ON DARK MODE: The brief lists dark mode as OUT OF SCOPE for v1 (single
-   warm light theme). A warm dark palette is included below but is OPTIONAL /
-   FUTURE — do not wire the toggle in v1 unless the brief changes.
+   NOTE ON DARK MODE: shipped, per the brief's 2026-07-04 post-review update —
+   a designed warm-charcoal palette, never an inversion. Light stays the primary
+   theme. Three modes (dark / light / auto) via a header toggle; `auto` follows
+   prefers-color-scheme and is the default before any choice is made.
    ========================================================================== */
 
 :root {
@@ -180,73 +181,128 @@
    fallback that respects an explicit light choice.
    ========================================================================== */
 
-[data-theme="dark"] {
-  --color-bg-primary:      #1c1917;  /* warm near-black */
-  --color-bg-secondary:    #262220;  /* raised cards */
-  --color-bg-tertiary:     #302b27;  /* wells */
-  --color-bg-inverse:      #faf7f2;
+/* The dark palette's VALUES are defined exactly once, here, as raw --dark-*
+   tokens. They are inert on their own — nothing reads them until one of the two
+   mapping blocks below points the semantic tokens at them. This keeps a single
+   source of truth for the colours while still supporting both an explicit
+   choice and the system preference. */
+:root {
+  --dark-bg-primary:      #1c1917;  /* warm near-black */
+  --dark-bg-secondary:    #262220;  /* raised cards */
+  --dark-bg-tertiary:     #302b27;  /* wells */
+  --dark-bg-inverse:      #faf7f2;
 
-  --color-text-primary:    #ede6db;  /* warm off-white (not pure) */
-  --color-text-secondary:  #b3a99c;
-  --color-text-tertiary:   #94897d;  /* small meta text — AA on dark (5.11:1) */
-  --color-text-inverse:    #2a2620;
-  --color-text-link:       #e0855f;  /* lightened terracotta for dark bg */
-  --glow: rgba(255, 232, 210, 0.05); /* faint warm lift — not a gray smudge */
+  --dark-text-primary:    #ede6db;  /* warm off-white (not pure) */
+  --dark-text-secondary:  #b3a99c;
+  --dark-text-tertiary:   #a2978a;  /* small meta text — AA on dark (6.0:1) */
+  --dark-text-inverse:    #2a2620;
+  --dark-text-link:       #f0a184;  /* lightened terracotta — AA on dark */
+  --dark-glow: rgba(255, 232, 210, 0.05); /* faint warm lift, not a gray smudge */
 
-  --color-border-primary:   #3a342f;
-  --color-border-secondary: #2f2a26;
-  --color-border-focus:     #e0855f;
+  --dark-border-primary:   #3a342f;
+  --dark-border-secondary: #2f2a26;
+  --dark-border-focus:     #f0a184;
 
-  --color-accent-primary:        #d9744e;  /* lightened terracotta — AA on dark */
-  --color-accent-primary-hover:  #e0855f;
-  --color-accent-primary-active: #c7623c;
-  --color-accent-secondary:      #6fa091;
+  --dark-accent-primary:        #e08a63;  /* AA as text on the dark bg */
+  --dark-accent-primary-hover:  #f0a184;
+  --dark-accent-primary-active: #c7623c;
+  --dark-accent-secondary:      #7fb3a3;
 
-  --color-accent-soft:      #3a2a22;
-  --color-accent-soft-text: #f0b79f;
+  --dark-accent-soft:      #3a2a22;
+  --dark-accent-soft-text: #f0b79f;
 
-  --color-surface-overlay:  rgba(0, 0, 0, 0.55);
+  --dark-surface-overlay:  rgba(0, 0, 0, 0.55);
 
-  /* Dark shadows: darker + more transparent, never reused from light */
-  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.40);
-  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.45);
-  --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.55);
-  --shadow-focus: 0 0 0 3px rgba(217, 116, 78, 0.40);
+  /* Dark shadows: darker + more transparent, never reused from light. */
+  --dark-shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.40);
+  --dark-shadow-md:    0 4px 12px rgba(0, 0, 0, 0.45);
+  --dark-shadow-lg:    0 12px 32px rgba(0, 0, 0, 0.55);
+  --dark-shadow-focus: 0 0 0 3px rgba(224, 138, 99, 0.45);
+
+  /* Default: follow the system, which is what `auto` means. The toggle
+     overrides this by setting color-scheme on the explicit-choice rules. */
+  color-scheme: light dark;
 }
 
+/* Path 1 — explicit choice. The pre-paint script sets data-theme="dark". */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg-primary:      var(--dark-bg-primary);
+  --color-bg-secondary:    var(--dark-bg-secondary);
+  --color-bg-tertiary:     var(--dark-bg-tertiary);
+  --color-bg-inverse:      var(--dark-bg-inverse);
+
+  --color-text-primary:    var(--dark-text-primary);
+  --color-text-secondary:  var(--dark-text-secondary);
+  --color-text-tertiary:   var(--dark-text-tertiary);
+  --color-text-inverse:    var(--dark-text-inverse);
+  --color-text-link:       var(--dark-text-link);
+  --glow:                  var(--dark-glow);
+
+  --color-border-primary:   var(--dark-border-primary);
+  --color-border-secondary: var(--dark-border-secondary);
+  --color-border-focus:     var(--dark-border-focus);
+
+  --color-accent-primary:        var(--dark-accent-primary);
+  --color-accent-primary-hover:  var(--dark-accent-primary-hover);
+  --color-accent-primary-active: var(--dark-accent-primary-active);
+  --color-accent-secondary:      var(--dark-accent-secondary);
+
+  --color-accent-soft:      var(--dark-accent-soft);
+  --color-accent-soft-text: var(--dark-accent-soft-text);
+
+  --color-surface-overlay:  var(--dark-surface-overlay);
+
+  --shadow-sm:    var(--dark-shadow-sm);
+  --shadow-md:    var(--dark-shadow-md);
+  --shadow-lg:    var(--dark-shadow-lg);
+  --shadow-focus: var(--dark-shadow-focus);
+}
+
+/* Path 2 — `auto`: no explicit choice recorded, so follow the system. Scoped to
+   :not([data-theme]) so an explicit light choice always wins, and so this keeps
+   working with JavaScript disabled. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg-primary:      #1c1917;
-    --color-bg-secondary:    #262220;
-    --color-bg-tertiary:     #302b27;
-    --color-bg-inverse:      #faf7f2;
+  :root:not([data-theme]) {
+    color-scheme: dark;
 
-    --color-text-primary:    #ede6db;
-    --color-text-secondary:  #b3a99c;
-    --color-text-tertiary:   #94897d;  /* small meta text — AA on dark (5.11:1) */
-    --color-text-inverse:    #2a2620;
-    --color-text-link:       #e0855f;
-    --glow: rgba(255, 232, 210, 0.05); /* faint warm lift — not a gray smudge */
+    --color-bg-primary:      var(--dark-bg-primary);
+    --color-bg-secondary:    var(--dark-bg-secondary);
+    --color-bg-tertiary:     var(--dark-bg-tertiary);
+    --color-bg-inverse:      var(--dark-bg-inverse);
 
-    --color-border-primary:   #3a342f;
-    --color-border-secondary: #2f2a26;
-    --color-border-focus:     #e0855f;
+    --color-text-primary:    var(--dark-text-primary);
+    --color-text-secondary:  var(--dark-text-secondary);
+    --color-text-tertiary:   var(--dark-text-tertiary);
+    --color-text-inverse:    var(--dark-text-inverse);
+    --color-text-link:       var(--dark-text-link);
+    --glow:                  var(--dark-glow);
 
-    --color-accent-primary:        #d9744e;
-    --color-accent-primary-hover:  #e0855f;
-    --color-accent-primary-active: #c7623c;
-    --color-accent-secondary:      #6fa091;
+    --color-border-primary:   var(--dark-border-primary);
+    --color-border-secondary: var(--dark-border-secondary);
+    --color-border-focus:     var(--dark-border-focus);
 
-    --color-accent-soft:      #3a2a22;
-    --color-accent-soft-text: #f0b79f;
+    --color-accent-primary:        var(--dark-accent-primary);
+    --color-accent-primary-hover:  var(--dark-accent-primary-hover);
+    --color-accent-primary-active: var(--dark-accent-primary-active);
+    --color-accent-secondary:      var(--dark-accent-secondary);
 
-    --color-surface-overlay:  rgba(0, 0, 0, 0.55);
+    --color-accent-soft:      var(--dark-accent-soft);
+    --color-accent-soft-text: var(--dark-accent-soft-text);
 
-    --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.40);
-    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.45);
-    --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.55);
-    --shadow-focus: 0 0 0 3px rgba(217, 116, 78, 0.40);
+    --color-surface-overlay:  var(--dark-surface-overlay);
+
+    --shadow-sm:    var(--dark-shadow-sm);
+    --shadow-md:    var(--dark-shadow-md);
+    --shadow-lg:    var(--dark-shadow-lg);
+    --shadow-focus: var(--dark-shadow-focus);
   }
+}
+
+/* An explicit light choice pins the light theme even on a dark system. */
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* Respect reduced motion globally (components should honor this too) */

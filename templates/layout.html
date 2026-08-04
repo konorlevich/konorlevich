@@ -1,0 +1,20 @@
+{{define "layout" -}}
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "gtm-noscript" .}}
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "header" .}}
+<main id="main" tabindex="-1">
+{{- template "content" . -}}
+</main>
+{{template "footer" .}}
+{{template "cookiebar" .}}
+<script defer src="{{asset "js/theme.js"}}"></script>
+{{- if .Site.NeedsConsent}}
+<script defer src="{{asset "js/consent.js"}}"></script>
+{{- end}}
+</body>
+</html>
+{{- end}}

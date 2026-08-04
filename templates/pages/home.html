@@ -1,0 +1,137 @@
+{{define "jsonld" -}}
+<!-- Structured data as an @graph: the site, who built it, and who it's about.
+     "Visible truth" — every value below is rendered somewhere on this page,
+     and the creator credit matches the visible footer link. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "{{absURL "/"}}#website",
+      "url": "{{absURL "/"}}",
+      "name": "{{.Name}} — Software Engineer",
+      "inLanguage": "en",
+      "about": { "@id": "{{absURL "/"}}#person" },
+      "creator": {
+        "@type": "Organization",
+        "@id": "https://soarline.studio/#organization",
+        "name": "Soarline Studio",
+        "url": "https://soarline.studio/"
+      },
+      "creditText": "Website created by Soarline Studio"
+    },
+    {
+      "@type": "Person",
+      "@id": "{{absURL "/"}}#person",
+      "name": "{{.Name}}",
+      "url": "{{absURL "/"}}",
+      "jobTitle": "Software Engineer",
+      "description": "{{.Tagline}}",
+      "address": "{{.Location}}",
+      "email": "{{.Email}}",{{if .Photo}}
+      "image": "{{absURL .Photo}}",{{end}}
+      "sameAs": [{{$first := true}}{{range .Links}}{{if ne .Name "Email"}}{{if not $first}}, {{end}}"{{.URL}}"{{$first = false}}{{end}}{{end}}]
+    }
+  ]
+}
+</script>
+{{- end}}
+
+{{define "content" -}}
+<!-- ================================================================ HERO -->
+<section class="hero container" aria-labelledby="hero-name">
+    <div class="hero-grid">
+        <div class="hero-portrait">
+            {{if .Photo}}
+            <picture>
+                <source srcset="{{webpOf .Photo}}" type="image/webp">
+                <img src="{{.Photo}}" alt="Portrait of {{.Name}}" width="512" height="512">
+            </picture>
+            {{else}}
+            <div class="hero-avatar-fallback" aria-hidden="true">{{initials .Name}}</div>
+            {{end}}
+        </div>
+        <div class="hero-text">
+            <p class="hero-eyebrow">Software Engineer · {{.Location}}</p>
+            <h1 class="hero-name" id="hero-name">{{.Name}}</h1>
+            <p class="hero-tagline">{{.Tagline}}</p>
+            <p class="hero-intro">{{.Intro}}</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+                <a class="btn btn-ghost" href="#experience">See my experience</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facts row -->
+    <div class="facts" aria-label="At a glance">
+        <span class="chip"><span class="dot" aria-hidden="true"></span>{{.Location}}</span>
+        <span class="chip chip-available"><span class="dot" aria-hidden="true"></span>{{.Availability}}</span>
+        {{if .Languages}}<span class="chip"><span class="dot" aria-hidden="true"></span>{{join .Languages}}</span>{{end}}
+    </div>
+</section>
+
+<!-- ========================================================== EXPERIENCE -->
+<section class="section container" id="experience" aria-labelledby="experience-title">
+    <div class="section-head">
+        <p class="section-eyebrow">The résumé, briefly</p>
+        <h2 class="section-title" id="experience-title">Experience</h2>
+        <p class="section-intro">Eight-plus years building and shipping software with international product and infrastructure teams.</p>
+    </div>
+
+    <div class="exp-list">
+        {{range .WorkExperience}}
+        <article class="exp-item">
+            <div class="exp-when">{{formatDate .From}} — {{formatDate .To}}</div>
+            <div>
+                <h3 class="exp-role"><span class="exp-company">{{.Company}}</span> · {{.Role}}</h3>
+                {{if .Achievements}}
+                <ul class="exp-achievements">
+                    {{range .Achievements}}<li>{{.}}</li>{{end}}
+                </ul>
+                {{end}}
+                {{if .Skills}}
+                <div class="exp-tags">
+                    {{range .Skills}}<span class="tag">{{.}}</span>{{end}}
+                </div>
+                {{end}}
+            </div>
+        </article>
+        {{end}}
+    </div>
+
+    {{if .Skills}}
+    <div class="skills skills-block">
+        {{range .Skills}}
+        <div class="skill-group">
+            <span class="skill-cat">{{.Category}}</span>
+            <div class="skill-items">
+                {{range .Items}}<span class="tag">{{.}}</span>{{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    <div class="exp-cta">
+        <a class="link-arrow" href="/cv/download">Download my CV <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+</section>
+
+<!-- ============================================================= CONTACT -->
+<section class="section container contact" id="contact" aria-labelledby="contact-title">
+    <h2 class="contact-title" id="contact-title">Let's talk</h2>
+    <p class="contact-sub">Whether you're hiring or just want to say hello — the fastest way to reach me is email.</p>
+    <div class="contact-actions">
+        <a class="btn btn-primary" href="mailto:{{.Email}}?subject=Hi%20{{.Name}}">Email me</a>
+        <details class="dl-menu">
+            <summary class="btn btn-ghost" aria-haspopup="menu">Download CV <span class="dl-caret" aria-hidden="true">▾</span></summary>
+            <div class="dl-menu-list" role="menu" aria-label="Download format">
+                <a role="menuitem" href="/cv/download">PDF document <span class="dl-ext" aria-hidden="true">.pdf</span></a>
+                <a role="menuitem" href="/cv/download.md">Markdown <span class="dl-ext" aria-hidden="true">.md</span></a>
+            </div>
+        </details>
+    </div>
+</section>
+{{- end}}

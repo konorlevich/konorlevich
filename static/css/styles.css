@@ -54,6 +54,99 @@ strong { font-weight: var(--font-weight-semibold); }
   box-shadow: var(--shadow-focus);
 }
 
+/* Skip link: hidden until focused, then a real, visible control anchored to the
+   top-left. Keyboard users get past the header in one keystroke.
+
+   Hidden by CLIPPING to a zero-area box, not by translating off-screen: an
+   element parked just above the viewport is still inside the document, so
+   rubber-band overscroll at the top of the page (macOS trackpads, iOS) scrolls
+   it into view. Clipping leaves nothing to reveal at any scroll position.
+   clip-path also clips the background and shadow, which `overflow: hidden`
+   alone would not. */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-4);
+  z-index: 100;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  background: var(--color-accent-primary);
+  color: var(--color-text-inverse);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+}
+/* :focus, not :focus-visible — the link is unreachable by pointer, so every
+   focus is deliberate, and this stays correct if it is focused programmatically. */
+.skip-link:focus {
+  width: auto;
+  height: auto;
+  padding: var(--space-4) var(--space-6);
+  overflow: visible;
+  clip-path: none;
+}
+
+/* main is focusable only as the skip link's target — it must never sit in the
+   tab order itself, and it must not draw a focus ring when jumped to. */
+main:focus { outline: none; }
+
+/* Theme toggle: a real button in the header. The written mode ("Auto" / "Light"
+   / "Dark") is the state cue — never colour alone. The dot mirrors it visually. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 38px;
+  padding: var(--space-4) var(--space-6);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--cta-radius);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default),
+              background-color var(--duration-fast) var(--easing-default);
+}
+.theme-toggle[hidden] { display: none; }
+.theme-toggle:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+}
+.theme-toggle:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+
+.theme-toggle-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  /* Half-filled disc: reads as "light / dark" at a glance in either theme. */
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+/* Below the nav breakpoint the header is logo + toggle + CTA; the toggle keeps
+   its label but sheds the padding it can't afford. */
+@media (max-width: 479px) {
+  .theme-toggle { padding: var(--space-4); }
+  .theme-toggle [data-theme-label] { display: none; }
+}
+
 /* ------------------------------------------------------------- LAYOUT SHELL */
 .container {
   width: 100%;
@@ -333,6 +426,8 @@ strong { font-weight: var(--font-weight-semibold); }
 
 /* -------------------------------------------------------------- SKILLS ROW */
 .skills { display: flex; flex-direction: column; gap: var(--space-6); }
+/* Replaces a style="" attribute that used to sit on this element in the markup. */
+.skills-block { margin-top: var(--space-10); }
 .skill-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-4); }
 .skill-cat {
   font-family: var(--font-family-mono);
@@ -519,6 +614,10 @@ strong { font-weight: var(--font-weight-semibold); }
   border-radius: var(--border-radius-sm);
 }
 .legal-back { margin-top: var(--space-9); }
+
+/* 404 — borrows the legal page's quiet measure; no new visual language. */
+.notfound { max-width: 44rem; }
+.notfound .contact-actions { margin-top: var(--space-8); }
 
 /* Footer link that triggers JS (reopen consent). Colour + size come from the
    shared `.footer-links a, .footer-linklike` rule above; here we just strip the

@@ -1,0 +1,63 @@
+{{define "head" -}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<meta name="description" content="{{.Description}}">
+{{- if .Robots}}
+<meta name="robots" content="{{.Robots}}">
+{{- end}}
+<link rel="canonical" href="{{.Canonical}}">
+<meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1917" media="(prefers-color-scheme: dark)">
+
+<!-- Theme pre-paint. Must stay inline and synchronous: it sets the attribute
+     before the first frame, so an explicit dark/light choice never flashes the
+     other theme. `auto` leaves the attribute off and lets the CSS
+     prefers-color-scheme rule decide — which also keeps dark mode working with
+     JavaScript disabled. -->
+<script>
+(function () {
+  try {
+    var deepLink = new URLSearchParams(location.search).get('theme');
+    var mode = deepLink || localStorage.getItem('theme');
+    if (mode === 'dark' || mode === 'light') {
+      document.documentElement.setAttribute('data-theme', mode);
+    }
+    if (deepLink === 'dark' || deepLink === 'light' || deepLink === 'auto') {
+      localStorage.setItem('theme', deepLink);
+    }
+  } catch (e) { /* storage blocked → fall through to prefers-color-scheme */ }
+})();
+</script>
+
+<!-- Open Graph / social preview. Absolute URLs — scrapers don't resolve relative. -->
+<meta property="og:type" content="{{.OGType}}">
+<meta property="og:site_name" content="{{.Name}}">
+<meta property="og:locale" content="en">
+<meta property="og:url" content="{{.Canonical}}">
+<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Description}}">
+<meta property="og:image" content="{{absURL "/static/img/og.png"}}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{.Name}} — Software Engineer. {{.Tagline}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{absURL "/static/img/og.png"}}">
+
+<!-- Icons. /favicon.ico at the root is the universal fallback every crawler
+     finds; the SVG and PNGs are the modern path. -->
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="{{asset "icons/icon.svg"}}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{asset "icons/apple-touch-icon.png"}}">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Fonts: preload the two above-the-fold faces, then inline every stylesheet.
+     At this size inlining beats three render-blocking requests outright — the
+     page arrives styled in one round trip. -->
+<link rel="preload" href="{{asset "fonts/Fraunces-var.woff2"}}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{asset "fonts/Inter-var.woff2"}}" as="font" type="font/woff2" crossorigin>
+<style>{{inlineCSS "css/fonts.css"}}{{inlineCSS "css/tokens.css"}}{{inlineCSS "css/styles.css"}}</style>
+
+{{block "jsonld" .}}{{end}}
+{{template "consent" .}}
+{{- end}}

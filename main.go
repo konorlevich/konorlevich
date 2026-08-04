@@ -1,497 +1,185 @@
+// Command konorlevich serves the personal site: a single self-contained binary
+// with every template, asset and piece of content embedded.
+//
+// main is wiring only — parse config, build the site, run the server. All the
+// behaviour lives in internal/.
 package main
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"html/template"
+	"embed"
+	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strings"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/go-pdf/fpdf"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 
 	"github.com/konorlevich/konorlevich/internal/config"
 	"github.com/konorlevich/konorlevich/internal/cv"
 	"github.com/konorlevich/konorlevich/internal/mailforward"
+	"github.com/konorlevich/konorlevich/internal/site"
+	"github.com/konorlevich/konorlevich/internal/web"
 )
 
-const (
-	defaultConfigFilename   = "config.yaml"
-	templateFilename        = "cv_template.html"
-	privacyTemplateFilename = "privacy_template.html"
-)
-
+// Everything the service serves travels inside the binary. Startup fails fast
+// if any of it is missing or malformed.
 var (
-	cfg         config.Config
-	l           *log.Logger
-	pageTmpl    *template.Template
-	privacyTmpl *template.Template
+	//go:embed templates
+	templateFS embed.FS
+
+	//go:embed static
+	staticFS embed.FS
+
+	//go:embed cv.yaml
+	cvYAML []byte
+
+	//go:embed config.yaml
+	defaultConfigYAML []byte
 )
 
-// assetVerCache memoizes cache-busting URLs so each static file is hashed once.
-var assetVerCache sync.Map // rel path -> "/static/<rel>?v=<hash>"
-
-// assetURL returns a cache-busting URL for a file under static/, based on its
-// content hash. Because the HTML is served fresh (not edge-cached), a changed
-// file yields a new ?v= value → a new CDN cache key → no stale asset after a
-// deploy, without any manual purge. Falls back to the plain path if unreadable.
-func assetURL(rel string) string {
-	if v, ok := assetVerCache.Load(rel); ok {
-		return v.(string)
-	}
-	url := "/static/" + rel
-	if b, err := os.ReadFile(filepath.Join("static", filepath.FromSlash(rel))); err == nil {
-		sum := sha256.Sum256(b)
-		url = "/static/" + rel + "?v=" + hex.EncodeToString(sum[:])[:8]
-	}
-	assetVerCache.Store(rel, url)
-	return url
-}
-
-// templateFuncs are helpers available inside cv_template.html.
-var templateFuncs = template.FuncMap{
-	// asset returns a content-hashed URL for a file in static/ (cache busting).
-	"asset": assetURL,
-	// formatDate turns "2006-01-02" into "Jan 2006"; passes through on error.
-	"formatDate": func(s string) string {
-		if s == "" {
-			return "Present"
-		}
-		t, err := time.Parse("2006-01-02", s)
-		if err != nil {
-			return s
-		}
-		return t.Format("Jan 2006")
-	},
-	// initials returns up to two uppercase initials from a full name.
-	"initials": func(name string) string {
-		parts := strings.Fields(name)
-		var b strings.Builder
-		for _, p := range parts {
-			if p == "" {
-				continue
-			}
-			b.WriteString(strings.ToUpper(p[:1]))
-			if b.Len() >= 2 {
-				break
-			}
-		}
-		return b.String()
-	},
-	// join concatenates a string slice with ", ".
-	"join": func(items []string) string { return strings.Join(items, ", ") },
-	// webpOf swaps a .jpg/.jpeg/.png path for its .webp sibling (for <picture> sources).
-	"webpOf": func(p string) string {
-		for _, ext := range []string{".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"} {
-			if strings.HasSuffix(p, ext) {
-				return strings.TrimSuffix(p, ext) + ".webp"
-			}
-		}
-		return p
-	},
-}
+// shutdownTimeout bounds how long in-flight requests get to drain. Railway
+// sends SIGTERM on redeploy, so a clean exit here is what makes deploys
+// zero-downtime.
+const shutdownTimeout = 10 * time.Second
 
 func main() {
-	l = log.New()
-	l.SetFormatter(&log.JSONFormatter{})
+	logger := newLogger()
 
-	// LOG_LEVEL controls verbosity (e.g. debug enables Resend API call logs).
-	if lvl := os.Getenv("LOG_LEVEL"); lvl != "" {
-		parsed, err := log.ParseLevel(lvl)
-		if err != nil {
-			l.WithError(err).WithField("log_level", lvl).Warn("invalid LOG_LEVEL, keeping default")
-		} else {
-			l.SetLevel(parsed)
-		}
-	}
-
-	configFile := os.Getenv("CONFIG_FILE")
-
-	if configFile == "" {
-		configFile = defaultConfigFilename
-	}
-
-	l.WithField("config_file", configFile).Info("using config file")
-	var err error
-	cfg, err = config.Load(configFile)
+	cfg, err := loadConfig(logger)
 	if err != nil {
-		l.WithError(err).Fatal("failed to load config")
+		logger.WithError(err).Fatal("failed to load config")
 	}
 
-	// Parse the page template once at startup (fail fast on a bad template).
-	pageTmpl, err = template.New(templateFilename).Funcs(templateFuncs).ParseFiles(templateFilename)
+	content, err := cv.Parse(cvYAML)
 	if err != nil {
-		l.WithError(err).Fatal("failed to parse page template")
+		logger.WithError(err).Fatal("failed to load CV content")
 	}
 
-	// Parse the privacy/cookies page template once at startup.
-	privacyTmpl, err = template.New(privacyTemplateFilename).Funcs(templateFuncs).ParseFiles(privacyTemplateFilename)
+	staticRoot, err := fs.Sub(staticFS, "static")
 	if err != nil {
-		l.WithError(err).Fatal("failed to parse privacy template")
+		logger.WithError(err).Fatal("failed to open embedded static assets")
 	}
 
-	appCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	defer stop()
+	siteCfg := site.FromEnv()
+	server, err := web.New(web.Options{
+		Static:    staticRoot,
+		Templates: templateFS,
+		CV:        content,
+		Site:      siteCfg,
+		Log:       logger,
+		BuildTime: time.Now(),
+	})
+	if err != nil {
+		logger.WithError(err).Fatal("failed to build site")
+	}
 
-	handler := &http.ServeMux{}
-	handler.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	handler.Handle("GET /", serveHTML())
-	handler.Handle("GET /cv", serveHTML())
-	handler.Handle("GET /privacy", servePrivacy())
-	handler.Handle("GET /cv/download", servePDF())
-	handler.Handle("GET /cv/download.md", serveMarkdown())
-	handler.Handle("POST /contact", submitContactForm())
+	mux := server.Handler()
 
 	// Inbound email forwarding (Resend webhook → forward to FORWARD_TO).
-	// Enabled only when RESEND_API_KEY, RESEND_FROM and FORWARD_TO are set.
+	// Registered only when RESEND_API_KEY, RESEND_FROM and FORWARD_TO are set.
 	if fwdCfg := mailforward.ConfigFromEnv(); fwdCfg.Enabled() {
-		fwd, err := mailforward.New(fwdCfg, l)
+		fwd, err := mailforward.New(fwdCfg, logger)
 		if err != nil {
-			l.WithError(err).Fatal("failed to init mail forwarder")
+			logger.WithError(err).Fatal("failed to init mail forwarder")
 		}
-		handler.Handle("POST /webhooks/resend/inbound", fwd.Handler())
-		l.Info("inbound email forwarding enabled at POST /webhooks/resend/inbound")
+		mux.Handle("POST /webhooks/resend/inbound", fwd.Handler())
+		logger.Info("inbound email forwarding enabled at POST /webhooks/resend/inbound")
 	} else {
-		l.Info("inbound email forwarding disabled (set RESEND_API_KEY, RESEND_FROM, FORWARD_TO to enable)")
+		logger.Info("inbound email forwarding disabled (set RESEND_API_KEY, RESEND_FROM, FORWARD_TO to enable)")
 	}
+
+	logger.WithFields(log.Fields{
+		"base_url":  siteCfg.BaseURL,
+		"analytics": siteCfg.GAID != "",
+		"gtm":       siteCfg.GTMID != "",
+	}).Info("site built")
+
+	if err := run(cfg.App.Address, web.LogRequests(mux, logger), logger); err != nil {
+		logger.WithError(err).Fatal("server error")
+	}
+}
+
+// run starts the HTTP server and blocks until a termination signal arrives,
+// then drains in-flight requests within shutdownTimeout.
+func run(addr string, handler http.Handler, logger log.FieldLogger) error {
+	// SIGKILL is deliberately absent: it cannot be caught, so listening for it
+	// would be a no-op that implies a guarantee the process cannot make.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	server := &http.Server{
-		Addr:    cfg.App.Address,
-		Handler: logRequests(handler, l),
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
+	errs := make(chan error, 1)
 	go func() {
-		select {
-		case <-appCtx.Done():
-			return
-		default:
-		}
-
-		l.WithField("app_address", cfg.App.Address).Info("Starting server")
-		if err := server.ListenAndServe(); err != nil {
-			l.WithError(err).Error("failed to start server")
-			stop()
+		logger.WithField("address", addr).Info("starting server")
+		// ErrServerClosed is the expected result of a graceful shutdown, not a
+		// failure, so it never reaches the error channel.
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errs <- err
 		}
 	}()
 
-	<-appCtx.Done()
-	l.Info("shutting down")
-	shutdownContext, cancelShutdownContext := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelShutdownContext()
-	err = server.Shutdown(shutdownContext)
+	select {
+	case err := <-errs:
+		return err
+	case <-ctx.Done():
+		logger.Info("shutting down")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return err
+	}
+	logger.Info("stopped cleanly")
+	return nil
+}
+
+// newLogger configures the one shared structured logger: JSON, one object per
+// line, to stdout.
+func newLogger() *log.Logger {
+	logger := log.New()
+	logger.SetFormatter(&log.JSONFormatter{})
+	logger.SetOutput(os.Stdout)
+
+	if lvl := os.Getenv("LOG_LEVEL"); lvl != "" {
+		parsed, err := log.ParseLevel(lvl)
+		if err != nil {
+			logger.WithError(err).WithField("log_level", lvl).Warn("invalid LOG_LEVEL, keeping default")
+		} else {
+			logger.SetLevel(parsed)
+		}
+	}
+	return logger
+}
+
+// loadConfig prefers an explicit CONFIG_FILE, falls back to the embedded
+// default, and lets PORT override the listen address (the platform convention).
+func loadConfig(logger log.FieldLogger) (config.Config, error) {
+	var (
+		cfg config.Config
+		err error
+	)
+	if path := os.Getenv("CONFIG_FILE"); path != "" {
+		logger.WithField("config_file", path).Info("loading config from file")
+		cfg, err = config.Load(path)
+	} else {
+		cfg, err = config.Parse(defaultConfigYAML)
+	}
 	if err != nil {
-		l.WithError(err).Fatalf("can't shut the server down gracefully")
+		return config.Config{}, err
 	}
 
-}
-
-// logRequests is HTTP access-log middleware: it logs one line per request with
-// method, path, status, response size and latency once the handler returns.
-func logRequests(next http.Handler, l *log.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		lw := &logResponseWriter{ResponseWriter: w, status: http.StatusOK}
-
-		next.ServeHTTP(lw, r)
-
-		l.WithFields(log.Fields{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"status":      lw.status,
-			"bytes":       lw.bytes,
-			"duration_ms": time.Since(start).Milliseconds(),
-			"remote_addr": r.RemoteAddr,
-			"user_agent":  r.UserAgent(),
-		}).Info("http request")
-	})
-}
-
-// logResponseWriter wraps http.ResponseWriter to capture the status code and
-// number of bytes written for access logging.
-type logResponseWriter struct {
-	http.ResponseWriter
-	status int
-	bytes  int
-}
-
-func (w *logResponseWriter) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
-}
-
-func (w *logResponseWriter) Write(b []byte) (int, error) {
-	n, err := w.ResponseWriter.Write(b)
-	w.bytes += n
-	return n, err
-}
-
-// Handle contact form submission
-func submitContactForm() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Invalid form submission", http.StatusBadRequest)
-			return
-		}
-
-		// Send email
-		//TODO: Notify
-
-		_, _ = w.Write([]byte("Contact form submitted successfully"))
+	if port := os.Getenv("PORT"); port != "" {
+		cfg.App.Address = ":" + port
 	}
-}
-
-// Serve HTML page
-func serveHTML() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cvData, err := readCV()
-		if err != nil {
-			l.WithError(err).Error("failed to read CV file")
-			http.Error(w, "Could not read CV", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := pageTmpl.Execute(w, cvData); err != nil {
-			l.WithError(err).Error("can't generate page")
-			http.Error(w, "Could not generate page", http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-// Serve the privacy / cookies page
-func servePrivacy() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cvData, err := readCV()
-		if err != nil {
-			l.WithError(err).Error("failed to read CV file")
-			http.Error(w, "Could not read CV", http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if err := privacyTmpl.Execute(w, cvData); err != nil {
-			l.WithError(err).Error("can't generate privacy page")
-			http.Error(w, "Could not generate page", http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-// Serve PDF file
-func servePDF() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cv, err := readCV()
-		if err != nil {
-			http.Error(w, "Could not read CV", http.StatusInternalServerError)
-			return
-		}
-
-		pdf := fpdf.New("P", "mm", "A4", "")
-		pdf.AddPage()
-		// Translate UTF-8 content into the core font's cp1252 encoding so
-		// characters like em dashes and × render correctly (not mojibake).
-		tr := pdf.UnicodeTranslatorFromDescriptor("")
-
-		// Name
-		pdf.SetFont("Arial", "B", 16)
-		pdf.Cell(40, 10, tr(cv.Name))
-		pdf.Ln(9)
-
-		// Location · Availability · Languages — one quiet meta line
-		meta := make([]string, 0, 3)
-		if cv.Location != "" {
-			meta = append(meta, cv.Location)
-		}
-		if cv.Availability != "" {
-			meta = append(meta, cv.Availability)
-		}
-		if len(cv.Languages) > 0 {
-			meta = append(meta, strings.Join(cv.Languages, ", "))
-		}
-		if len(meta) > 0 {
-			pdf.SetFont("Arial", "", 11)
-			pdf.SetTextColor(107, 99, 87) // warm secondary
-			pdf.MultiCell(190, 6, tr(strings.Join(meta, "  ·  ")), "", "L", false)
-			pdf.SetTextColor(0, 0, 0)
-		}
-
-		// Summary paragraph
-		if cv.Summary != "" {
-			pdf.Ln(1)
-			pdf.SetFont("Arial", "", 11)
-			pdf.MultiCell(190, 6, tr(cv.Summary), "", "L", false)
-		}
-		pdf.Ln(4)
-
-		// Links section — rendered as clickable hyperlinks
-		pdf.SetFont("Arial", "B", 14)
-		pdf.Cell(40, 10, "Links")
-		pdf.Ln(8)
-		pdf.SetFont("Arial", "", 12)
-		for _, link := range cv.Links {
-			label := tr(link.Name + ": ")
-			pdf.CellFormat(pdf.GetStringWidth(label)+1, 8, label, "", 0, "L", false, 0, "")
-			// display without the mailto: scheme, but keep it as the link target
-			display := strings.TrimPrefix(link.URL, "mailto:")
-			pdf.SetTextColor(168, 72, 42) // terracotta accent
-			pdf.SetFont("Arial", "U", 12) // underlined
-			pdf.CellFormat(0, 8, tr(display), "", 1, "L", false, 0, link.URL)
-			pdf.SetFont("Arial", "", 12)
-			pdf.SetTextColor(0, 0, 0)
-		}
-
-		// Work Experience
-		pdf.Ln(2)
-		pdf.SetFont("Arial", "B", 14)
-		pdf.Cell(40, 10, "Work Experience")
-		pdf.Ln(10)
-
-		for _, exp := range cv.WorkExperience {
-			to := exp.To
-			if to == "" {
-				to = "Present"
-			}
-			pdf.SetFont("Arial", "B", 12)
-			pdf.Cell(40, 8, tr(fmt.Sprintf("%s - %s", exp.Company, exp.Role)))
-			pdf.Ln(6)
-			pdf.SetFont("Arial", "", 12)
-			pdf.Cell(40, 8, tr(fmt.Sprintf("From: %s to %s", exp.From, to)))
-			pdf.Ln(8)
-
-			pdf.Cell(40, 8, fmt.Sprintf("Skills: %s", tr(strings.Join(exp.Skills, ", "))))
-			pdf.Ln(8)
-
-			pdf.Cell(40, 8, "Achievements:")
-			pdf.Ln(6)
-			for _, achievement := range exp.Achievements {
-				pdf.MultiCell(190, 6, tr(fmt.Sprintf("- %s", achievement)), "", "", false)
-			}
-			pdf.Ln(8)
-		}
-
-		// Serve inline with a sensible filename if saved.
-		w.Header().Set("Content-Type", "application/pdf")
-		w.Header().Set("Content-Disposition",
-			fmt.Sprintf("inline; filename=%q", strings.ReplaceAll(cv.Name, " ", "-")+"-CV.pdf"))
-		if err = pdf.Output(w); err != nil {
-			http.Error(w, "Could not generate PDF", http.StatusInternalServerError)
-		}
-	}
-}
-
-// Serve the CV as Markdown
-func serveMarkdown() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cvData, err := readCV()
-		if err != nil {
-			l.WithError(err).Error("failed to read CV file")
-			http.Error(w, "Could not read CV", http.StatusInternalServerError)
-			return
-		}
-
-		md := renderMarkdown(cvData)
-
-		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-		w.Header().Set("Content-Disposition",
-			fmt.Sprintf("inline; filename=%q", strings.ReplaceAll(cvData.Name, " ", "-")+"-CV.md"))
-		if _, err := w.Write([]byte(md)); err != nil {
-			l.WithError(err).Error("failed to write markdown CV")
-		}
-	}
-}
-
-// renderMarkdown builds a Markdown document from the CV data.
-func renderMarkdown(cv cv.CV) string {
-	var b strings.Builder
-
-	// Name heading
-	fmt.Fprintf(&b, "# %s\n\n", cv.Name)
-
-	if cv.Tagline != "" {
-		fmt.Fprintf(&b, "_%s_\n\n", cv.Tagline)
-	}
-
-	// Location · Availability · Languages — one quiet meta line
-	meta := make([]string, 0, 3)
-	if cv.Location != "" {
-		meta = append(meta, cv.Location)
-	}
-	if cv.Availability != "" {
-		meta = append(meta, cv.Availability)
-	}
-	if len(cv.Languages) > 0 {
-		meta = append(meta, strings.Join(cv.Languages, ", "))
-	}
-	if len(meta) > 0 {
-		fmt.Fprintf(&b, "%s\n\n", strings.Join(meta, " · "))
-	}
-
-	if cv.Summary != "" {
-		fmt.Fprintf(&b, "%s\n\n", cv.Summary)
-	}
-
-	// Links
-	if len(cv.Links) > 0 {
-		b.WriteString("## Links\n\n")
-		for _, link := range cv.Links {
-			display := strings.TrimPrefix(link.URL, "mailto:")
-			fmt.Fprintf(&b, "- **%s:** [%s](%s)\n", link.Name, display, link.URL)
-		}
-		b.WriteString("\n")
-	}
-
-	// Skills
-	if len(cv.Skills) > 0 {
-		b.WriteString("## Skills\n\n")
-		for _, s := range cv.Skills {
-			fmt.Fprintf(&b, "- **%s:** %s\n", s.Category, strings.Join(s.Items, ", "))
-		}
-		b.WriteString("\n")
-	}
-
-	// Work Experience
-	if len(cv.WorkExperience) > 0 {
-		b.WriteString("## Work Experience\n\n")
-		for _, exp := range cv.WorkExperience {
-			to := exp.To
-			if to == "" {
-				to = "Present"
-			}
-			fmt.Fprintf(&b, "### %s — %s\n\n", exp.Company, exp.Role)
-			fmt.Fprintf(&b, "_%s – %s_\n\n", exp.From, to)
-			if len(exp.Skills) > 0 {
-				fmt.Fprintf(&b, "**Skills:** %s\n\n", strings.Join(exp.Skills, ", "))
-			}
-			if len(exp.Achievements) > 0 {
-				b.WriteString("**Achievements:**\n\n")
-				for _, achievement := range exp.Achievements {
-					fmt.Fprintf(&b, "- %s\n", achievement)
-				}
-				b.WriteString("\n")
-			}
-		}
-	}
-
-	return strings.TrimRight(b.String(), "\n") + "\n"
-}
-
-// Read CV YAML file
-func readCV() (cv.CV, error) {
-	var cv cv.CV
-	data, err := os.ReadFile("cv.yaml")
-	if err != nil {
-		return cv, err
-	}
-	err = yaml.Unmarshal(data, &cv)
-	return cv, err
+	return cfg, nil
 }

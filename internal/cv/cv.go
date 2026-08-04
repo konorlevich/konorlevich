@@ -1,4 +1,42 @@
+// Package cv is the content layer: the typed shape of cv.yaml and its loader.
+// Content is data, not code — adding a role or a link is a YAML edit, never a
+// template or handler change.
 package cv
+
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+)
+
+// Parse decodes cv.yaml content and checks that the fields every page depends
+// on are present. Callers run this at boot, so a malformed or half-filled CV is
+// a startup failure rather than a broken page in production.
+func Parse(data []byte) (CV, error) {
+	var c CV
+	if err := yaml.Unmarshal(data, &c); err != nil {
+		return CV{}, fmt.Errorf("parse cv: %w", err)
+	}
+	required := []struct{ field, value string }{
+		{"name", c.Name},
+		{"tagline", c.Tagline},
+		{"email", c.Email},
+		{"location", c.Location},
+	}
+	missing := make([]string, 0, len(required))
+	for _, r := range required {
+		if r.value == "" {
+			missing = append(missing, r.field)
+		}
+	}
+	if len(missing) > 0 {
+		return CV{}, fmt.Errorf("cv: required field(s) empty: %v", missing)
+	}
+	if len(c.WorkExperience) == 0 {
+		return CV{}, fmt.Errorf("cv: work_experience is empty")
+	}
+	return c, nil
+}
 
 type CV struct {
 	Name           string       `yaml:"name"`

@@ -1,0 +1,98 @@
+{{define "jsonld" -}}
+<!-- Same WebSite node (and creator credit) as the home page — the @id ties them
+     together; the visible footer credit matches. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "{{absURL "/"}}#website",
+      "url": "{{absURL "/"}}",
+      "name": "{{.Name}} — Software Engineer",
+      "inLanguage": "en",
+      "creator": {
+        "@type": "Organization",
+        "@id": "https://soarline.studio/#organization",
+        "name": "Soarline Studio",
+        "url": "https://soarline.studio/"
+      },
+      "creditText": "Website created by Soarline Studio"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "{{absURL "/privacy"}}#webpage",
+      "url": "{{absURL "/privacy"}}",
+      "name": "Privacy & Cookies",
+      "inLanguage": "en",
+      "isPartOf": { "@id": "{{absURL "/"}}#website" }
+    }
+  ]
+}
+</script>
+{{- end}}
+
+{{define "content" -}}
+<article class="section container legal" aria-labelledby="privacy-title">
+    <p class="section-eyebrow">Privacy &amp; cookies</p>
+    <h1 class="legal-title" id="privacy-title">What this site collects, and your choice</h1>
+
+    <p class="legal-lead">
+        This is a personal site. It doesn't sell anything, run ads, or build a profile of you.
+        The only thing it measures is anonymous, aggregate traffic — and only if you agree to it.
+    </p>
+
+    <h2>The one tool: Google Analytics</h2>
+    <p>
+        The site uses <strong>Google Analytics 4</strong> to understand roughly how many people
+        visit and which pages they read. When enabled, it collects things like the pages you view,
+        your approximate location (derived from your IP address, which Google does not log in full),
+        your device and browser type, and the site that referred you. It does <strong>not</strong>
+        see your name, email, or anything you type.
+    </p>
+
+    <h2>Cookies</h2>
+    <p>
+        Until you press <strong>Accept</strong>, Google Analytics runs in a cookieless mode and
+        <strong>no analytics cookies are set</strong>. If you accept, it stores a couple of
+        first-party cookies (<code>_ga</code> and <code>_ga_&lt;id&gt;</code>) used to tell
+        returning visits apart. These expire up to two years after your last visit. The only other
+        thing stored is your consent choice itself, kept in your browser's local storage so the
+        banner doesn't ask again — that never leaves your device. Your choice is remembered for
+        about six months, after which the banner asks once more.
+    </p>
+
+    <h2>Why it's off by default</h2>
+    <p>
+        Under the GDPR, analytics cookies need your <strong>consent</strong> (Article 6(1)(a)) —
+        so the default is <em>denied</em>, and nothing tracks you until you actively choose Accept.
+        Declining is exactly as easy as accepting, and costs you nothing: the site works the same
+        either way.
+    </p>
+
+    <h2>Changing your mind</h2>
+    <p>
+        You can switch at any time. Use the <strong>“Cookie settings”</strong> link in the footer
+        of any page to reopen the banner and choose again. Choosing Decline stops any further
+        analytics cookies; you can also clear cookies for this site in your browser to remove
+        existing ones.
+    </p>
+
+    <h2>Who else is involved</h2>
+    <p>
+        Google acts as the data processor for the analytics described above; you can read
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's privacy policy</a>
+        for how they handle it. No other third parties, trackers, or advertising networks are used.
+    </p>
+
+    <h2>Questions</h2>
+    <p>
+        Anything unclear, or want your data removed? Email me at
+        <a href="mailto:{{.Email}}?subject=Privacy%20question">{{.Email}}</a>.
+    </p>
+
+    <p class="legal-back">
+        <a class="link-arrow" href="/"><span class="arrow" aria-hidden="true">←</span> Back to home</a>
+    </p>
+</article>
+{{- end}}

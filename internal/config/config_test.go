@@ -35,14 +35,11 @@ func TestLoad(t *testing.T) {
 				},
 			},
 		},
-		{name: "with pprof",
+		{name: "unknown keys are ignored",
 			filename: "test_data/with_pprof.yaml",
 			want: Config{
 				App: Server{
 					Address: "asg:13",
-				},
-				Pprof: Server{
-					Address: "hg:15",
 				},
 			},
 		},

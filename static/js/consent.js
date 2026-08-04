@@ -2,10 +2,10 @@
  * Cookie consent state manager.
  *
  * Owns the visitor's analytics choice and the consent bar. Configuration (storage
- * key / version / max-age) comes from window.CONSENT_CONFIG, set by the shared
- * /static/js/consent-default.js bootstrap that also seeds Consent Mode in <head> —
- * so those values live in exactly one place. The fallback below only applies if
- * that bootstrap failed to load.
+ * key / version / max-age) comes from window.CONSENT_CONFIG, set by the inline
+ * bootstrap in <head> that also seeds Consent Mode before gtag/js loads — so
+ * those values live in exactly one place. The fallback below mirrors the server
+ * defaults and only applies if the bootstrap was stripped.
  *
  * Exposes window.cookieConsent:
  *   getChoice()      -> 'granted' | 'denied' | null   (null = no valid choice)
@@ -19,7 +19,7 @@
   var CFG = window.CONSENT_CONFIG || {
     storageKey: 'cookie-consent',
     version: 1,
-    maxAgeMs: 1000 * 60 * 60 * 24 * 365
+    maxAgeMs: 1000 * 60 * 60 * 24 * 180   // ~6 months, then re-prompt
   };
   var STORAGE_KEY = CFG.storageKey;
   var VERSION = CFG.version;

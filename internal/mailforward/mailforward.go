@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	resend "github.com/resend/resend-go/v2"
+	resend "github.com/resend/resend-go/v3"
 	"github.com/sirupsen/logrus"
 	svix "github.com/svix/svix-webhooks/go"
 )
