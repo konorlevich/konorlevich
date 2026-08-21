@@ -2,10 +2,8 @@
 test.*
 cache/*
 .env.*
-.design
+.design/**/screenshots
 
-*.md
-!README.md
 .screenshots
 .impeccable
 .codex
