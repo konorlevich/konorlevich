@@ -46,7 +46,7 @@
             {{if .Photo}}
             <picture>
                 <source srcset="{{webpOf .Photo}}" type="image/webp">
-                <img src="{{.Photo}}" alt="Portrait of {{.Name}}" width="512" height="512">
+                <img src="{{.Photo}}" alt="Portrait of {{.Name}}" width="512" height="512" draggable="false">
             </picture>
             {{else}}
             <div class="hero-avatar-fallback" aria-hidden="true">{{initials .Name}}</div>
@@ -58,8 +58,10 @@
             <p class="hero-tagline">{{.Tagline}}</p>
             <p class="hero-intro">{{.Intro}}</p>
             <div class="hero-actions">
-                <a class="btn btn-primary" href="mailto:{{.Email}}">Email me</a>
-                <a class="btn btn-ghost" href="#experience">See my experience</a>
+                <a class="btn btn-primary" href="mailto:{{.Email}}"
+                   data-track="contact_click" data-track-method="mailto" data-track-location="hero">Email me</a>
+                <a class="btn btn-ghost" href="#experience"
+                   data-track="select_content" data-track-cta-label="See my experience" data-track-location="hero">See my experience</a>
             </div>
         </div>
     </div>
@@ -116,7 +118,9 @@
     {{end}}
 
     <div class="exp-cta">
-        <a class="link-arrow" href="/cv/download">Download my CV <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="link-arrow" href="/cv/download"
+           data-track="file_download" data-track-file-name="{{downloadName "pdf"}}"
+           data-track-file-extension="pdf" data-track-location="experience">Download my CV <span class="arrow" aria-hidden="true">→</span></a>
     </div>
 </section>
 
@@ -125,12 +129,17 @@
     <h2 class="contact-title" id="contact-title">Let's talk</h2>
     <p class="contact-sub">If you're hiring, email is the fastest way to reach me. I read everything and reply within a day or two.</p>
     <div class="contact-actions">
-        <a class="btn btn-primary" href="mailto:{{.Email}}">Email me</a>
+        <a class="btn btn-primary" href="mailto:{{.Email}}"
+           data-track="contact_click" data-track-method="mailto" data-track-location="contact">Email me</a>
         <details class="dl-menu">
             <summary class="btn btn-ghost" aria-haspopup="menu">Download CV <span class="dl-caret" aria-hidden="true">▾</span></summary>
             <div class="dl-menu-list" role="menu" aria-label="Download format">
-                <a role="menuitem" href="/cv/download">PDF document <span class="dl-ext" aria-hidden="true">.pdf</span></a>
-                <a role="menuitem" href="/cv/download.md">Markdown <span class="dl-ext" aria-hidden="true">.md</span></a>
+                <a role="menuitem" href="/cv/download"
+                   data-track="file_download" data-track-file-name="{{downloadName "pdf"}}"
+                   data-track-file-extension="pdf" data-track-location="contact">PDF document <span class="dl-ext" aria-hidden="true">.pdf</span></a>
+                <a role="menuitem" href="/cv/download.md"
+                   data-track="file_download" data-track-file-name="{{downloadName "md"}}"
+                   data-track-file-extension="md" data-track-location="contact">Markdown <span class="dl-ext" aria-hidden="true">.md</span></a>
             </div>
         </details>
     </div>
@@ -138,6 +147,7 @@
          is configured the mailto: buttons above do nothing, and this is the only
          thing left to copy. It also keeps the JSON-LD "email" value visible on
          the page, which the "visible truth" rule at the top of this file requires. -->
-    <p class="contact-email"><a href="mailto:{{.Email}}">{{.Email}}</a></p>
+    <p class="contact-email"><a href="mailto:{{.Email}}"
+        data-track="contact_click" data-track-method="mailto" data-track-location="contact">{{.Email}}</a></p>
 </section>
 {{- end}}

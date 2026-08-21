@@ -1,4 +1,9 @@
 {{define "content" -}}
+{{/* page_not_found is the one event that cannot be declared on the element that
+     triggers it: this body is a single pre-rendered blob served for every
+     unmatched path, so the server cannot know which URL missed. "$path" is
+     resolved to location.pathname by the tracker at fire time. */}}
+<div hidden data-track-load="page_not_found" data-track-path="$path"></div>
 <section class="section container notfound" aria-labelledby="notfound-title">
     <p class="section-eyebrow">404</p>
     <h1 class="legal-title" id="notfound-title">That page isn't here</h1>
@@ -6,8 +11,10 @@
         The link may be old, or I may have moved something. Nothing's broken on your end.
     </p>
     <div class="contact-actions">
-        <a class="btn btn-primary" href="/">Back to home</a>
-        <a class="btn btn-ghost" href="/#experience">See my experience</a>
+        <a class="btn btn-primary" href="/"
+           data-track="select_content" data-track-cta-label="Back to home" data-track-location="notfound">Back to home</a>
+        <a class="btn btn-ghost" href="/#experience"
+           data-track="select_content" data-track-cta-label="See my experience" data-track-location="notfound">See my experience</a>
     </div>
 </section>
 {{- end}}

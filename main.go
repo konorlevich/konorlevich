@@ -64,7 +64,10 @@ func main() {
 		logger.WithError(err).Fatal("failed to open embedded static assets")
 	}
 
-	siteCfg := site.FromEnv()
+	siteCfg, err := site.FromEnv()
+	if err != nil {
+		logger.WithError(err).Fatal("failed to resolve site config")
+	}
 	server, err := web.New(web.Options{
 		Static:    staticRoot,
 		Templates: templateFS,
@@ -93,9 +96,9 @@ func main() {
 	}
 
 	logger.WithFields(log.Fields{
-		"base_url":  siteCfg.BaseURL,
-		"analytics": siteCfg.GAID != "",
-		"gtm":       siteCfg.GTMID != "",
+		"base_url":   siteCfg.BaseURL,
+		"tag_kind":   siteCfg.Tag.JSKind(),
+		"tag_source": siteCfg.TagSource,
 	}).Info("site built")
 
 	if err := run(cfg.App.Address, web.LogRequests(mux, logger), logger); err != nil {

@@ -18,13 +18,13 @@ const opsCacheControl = "public, max-age=3600"
 // buildOps renders robots.txt, sitemap.xml, llms.txt and site.webmanifest.
 // They are plain data derived from the same content the pages use, so they can
 // never drift from what is actually served.
-func buildOps(cfg site.Config, content cv.CV, sitemapPaths []string, assets *Assets, buildTime time.Time) (map[string]*Blob, error) {
+func buildOps(cfg site.Config, content cv.CV, sitemapEntries []SitemapEntry, assets *Assets, buildTime time.Time) (map[string]*Blob, error) {
 	out := make(map[string]*Blob, 4)
 
 	out["/robots.txt"] = NewBlob("text/plain; charset=utf-8",
 		[]byte(robotsTxt(cfg)), opsCacheControl, buildTime)
 
-	sitemap, err := sitemapXML(cfg, sitemapPaths, buildTime)
+	sitemap, err := sitemapXML(sitemapEntries)
 	if err != nil {
 		return nil, err
 	}
@@ -64,13 +64,14 @@ type urlSet struct {
 	URLs    []urlEntry `xml:"url"`
 }
 
-func sitemapXML(cfg site.Config, paths []string, buildTime time.Time) ([]byte, error) {
+// sitemapXML renders the sitemap from content dates only. It deliberately takes
+// no build time: <lastmod> must reflect when each page's content changed, so two
+// consecutive deploys with no content edit produce identical bytes. A lastmod
+// that moves on every deploy is a signal crawlers learn to ignore.
+func sitemapXML(entries []SitemapEntry) ([]byte, error) {
 	set := urlSet{NS: "http://www.sitemaps.org/schemas/sitemap/0.9"}
-	for _, p := range paths {
-		set.URLs = append(set.URLs, urlEntry{
-			Loc:     cfg.URL(p),
-			LastMod: buildTime.UTC().Format("2006-01-02"),
-		})
+	for _, e := range entries {
+		set.URLs = append(set.URLs, urlEntry{Loc: e.Loc, LastMod: e.LastMod})
 	}
 	body, err := xml.MarshalIndent(set, "", "  ")
 	if err != nil {

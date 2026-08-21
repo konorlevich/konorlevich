@@ -12,9 +12,11 @@
 {{template "footer" .}}
 {{template "cookiebar" .}}
 <script defer src="{{asset "js/theme.js"}}"></script>
-{{- if .Site.NeedsConsent}}
-<script defer src="{{asset "js/consent.js"}}"></script>
-{{- end}}
+{{/* Loaded unconditionally: it carries the track() helper as well as the consent
+     controller, and both no-op cleanly when no tag is configured. The cookie bar
+     MARKUP is still gated on a tag existing — no tag means no cookies, so there
+     is nothing to ask about. */}}
+<script defer src="{{asset "js/analytics.js"}}"></script>
 </body>
 </html>
 {{- end}}

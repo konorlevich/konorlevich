@@ -77,3 +77,18 @@ work_experience:
     achievements:
       - "Led a team of three and split a monolith into microservices, cutting API response time 10× — from 2s to 0.2s."
       - "Integrated 20+ partner platforms into the company's core integration system and kept them running."
+
+# ---------------------------------------------------------------------------
+# Per-page content dates. `updated` is the date that page's CONTENT actually
+# changed — it feeds the sitemap's <lastmod>. Do NOT bump it for CSS, template,
+# dependency or copy-formatting changes: a lastmod that moves on every deploy
+# is a signal Google learns to ignore. Every page the renderer serves must have
+# an entry here or the binary refuses to boot.
+# ---------------------------------------------------------------------------
+pages:
+  "/":
+    updated: "2026-08-04"
+  "/privacy":
+    updated: "2026-08-04"
+  "/__404":
+    updated: "2026-08-04"

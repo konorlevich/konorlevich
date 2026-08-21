@@ -1,20 +1,31 @@
 {{define "consent" -}}
-{{- if .Site.NeedsConsent}}
+{{- if .Site.Tag.IsSet}}
 <!-- Consent bootstrap — the single source of truth for consent configuration,
-     inlined and synchronous so it always runs BEFORE gtag/js and GTM. Consent
-     Mode v2 starts fully denied; a stored, still-valid "granted" choice is
-     replayed here so returning visitors aren't re-prompted. consent.js reads the
-     same window.CONSENT_CONFIG, so the key/version/max-age live in one place. -->
+     inlined and synchronous so it always runs BEFORE whichever tag was resolved:
+     before gtag/js on the GA4 branch, before the container script on the GTM
+     branch. Consent Mode v2 starts fully denied; a stored, still-valid "granted"
+     choice is replayed here so returning visitors aren't re-prompted.
+
+     The default-denied block is deliberately OUTSIDE both tag branches. Living
+     inside the GTM-only path would ship the GA4 path with no consent gating at
+     all — the exact failure this block exists to prevent.
+
+     Which snippet renders is decided by site.Tag.Kind, resolved once at boot.
+     Nothing here inspects the id, so a GA4 id can never be served as a
+     container (which would silently collect nothing). Exactly one path emits. -->
 <script>
 (function (w) {
   'use strict';
   var CONFIG = {
     storageKey: 'cookie-consent',
     version: {{.Site.ConsentVersion}},
-    maxAgeMs: {{.Site.ConsentMaxAgeDays}} * 24 * 60 * 60 * 1000,
-    gaId: {{.Site.GAID}}
+    maxAgeMs: {{.Site.ConsentMaxAgeDays}} * 24 * 60 * 60 * 1000
   };
   w.CONSENT_CONFIG = CONFIG;
+
+  // The resolved tag, handed to the client so track() branches on the same
+  // value the server used. No prefix-matching in JS, no second source of truth.
+  w.__tag = { kind: {{.Site.Tag.JSKind}} };
 
   w.dataLayer = w.dataLayer || [];
   function gtag() { w.dataLayer.push(arguments); }
@@ -37,15 +48,20 @@
       }
     }
   } catch (e) { /* storage blocked → stay denied (the safe default) */ }
+{{- if .Site.Tag.IsGA4}}
 
+  // GA4 direct: gtag.js needs the js/config pair. On the GTM branch this must
+  // NOT run — GA4 is configured inside the container there, and doing both
+  // double-counts every pageview.
   gtag('js', new Date());
-  if (CONFIG.gaId) { gtag('config', CONFIG.gaId); }
+  gtag('config', {{.Site.Tag.ID}});
+{{- end}}
 })(window);
 </script>
-{{- if .Site.GAID}}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{.Site.GAID}}"></script>
+{{- if .Site.Tag.IsGA4}}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{.Site.Tag.ID}}"></script>
 {{- end}}
-{{- if .Site.GTMID}}
+{{- if .Site.Tag.IsGTM}}
 <script>
 (function (w, d, s, l, i) {
   w[l] = w[l] || [];
@@ -55,15 +71,17 @@
   j.async = true;
   j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
   f.parentNode.insertBefore(j, f);
-})(window, document, 'script', 'dataLayer', {{.Site.GTMID}});
+})(window, document, 'script', 'dataLayer', {{.Site.Tag.ID}});
 </script>
 {{- end}}
 {{- end}}
 {{- end}}
 
+{{/* The <noscript> iframe is GTM-only: it does nothing for gtag.js, so it must
+     never be copied over to the GA4 branch. */}}
 {{define "gtm-noscript" -}}
-{{- if .Site.GTMID}}
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{.Site.GTMID}}"
+{{- if .Site.Tag.IsGTM}}
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{.Site.Tag.ID}}"
     height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
 {{- end}}
 {{- end}}

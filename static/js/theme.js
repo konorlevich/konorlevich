@@ -64,6 +64,11 @@
       mode = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
       apply(mode);
       render();
+      // Guarded: the theme control must keep working whether or not the
+      // analytics bootstrap loaded, so it never hard-depends on track().
+      if (typeof window.track === 'function') {
+        window.track('theme_toggle', { to: mode });
+      }
     });
 
     button.hidden = false;   // only reveal the control once it can work

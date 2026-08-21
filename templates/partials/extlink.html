@@ -1,0 +1,19 @@
+{{/* The one definition of an off-domain link.
+     Every link that leaves this site goes through here, so the rules cannot be
+     forgotten on a new template:
+       - target="_blank" AND rel="noopener noreferrer" — never _blank alone,
+         which leaks window.opener and the referrer.
+       - a visible icon (aria-hidden, decorative) AND a visually-hidden
+         "(opens in new tab)" inside the accessible name, so the new tab is not a
+         surprise for screen-reader or keyboard users. Never the icon alone —
+         that would be meaning carried by a glyph nobody announces.
+     Internal links must NOT use this: stealing navigation from the user on
+     same-site links is a dark pattern. mailto:/tel: get no target at all.
+
+     Args: url, label, and optionally class.
+     The ↗ glyph matches the site's existing text-glyph vocabulary (→ in
+     .link-arrow, ▾ in .dl-caret) rather than introducing an icon system, and it
+     inherits colour and size from the link for free. */}}
+{{define "extlink" -}}
+<a{{with .class}} class="{{.}}"{{end}} href="{{.url}}" target="_blank" rel="noopener noreferrer">{{.label}}<span class="ext-icon" aria-hidden="true">&#8599;</span><span class="visually-hidden"> (opens in new tab)</span></a>
+{{- end}}

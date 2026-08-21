@@ -32,6 +32,37 @@ body {
   background-image:
     radial-gradient(120% 60% at 50% -10%, var(--glow) 0%, transparent 60%);
   background-attachment: fixed;
+
+  /* Footer anchoring: on a short page (the 404, a thin legal page) the footer
+     must sit at the bottom of the viewport, not float mid-screen with dead
+     space under it. On a long page it stays in normal flow below the content.
+     Pure CSS — deliberately NOT position: fixed, which would overlay content
+     and fight the fixed cookie bar.
+
+     Column flex is safe for everything already in here: .topbar stays sticky,
+     .cookie-bar is position: fixed and so out of flow, and the .skip-link is
+     absolute. 100dvh (not vh) so mobile browser chrome doesn't cause a
+     scrollbar on a page that exactly fills the screen. */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+
+  /* The consent bar is position: fixed, so it sits ON TOP of page content.
+     Once the footer is anchored to the bottom of the viewport (above), the bar
+     lands squarely over it and hides the colophon and the creator credit — and
+     that credit has to stay visibly in the DOM, because the WebSite JSON-LD
+     asserts it ("visible truth").
+
+     analytics.js measures the bar and publishes its height here while it is
+     open, so the page reserves exactly the space it needs and gives it back the
+     moment a choice is made. box-sizing: border-box means this padding counts
+     inside the 100dvh above, so the footer moves up rather than overflowing. */
+  padding-bottom: var(--consent-bar-height, 0px);
+}
+
+/* Takes the slack, which is what pushes the footer down. */
+main {
+  flex: 1;
 }
 
 h1, h2, h3, h4 {
@@ -52,6 +83,55 @@ strong { font-weight: var(--font-weight-semibold); }
   outline: none;
   border-radius: var(--border-radius-sm);
   box-shadow: var(--shadow-focus);
+}
+
+/* Content images are not casually draggable or selectable: dragging the
+   portrait onto the desktop or into another tab shouldn't be a one-gesture
+   action. Scoped to the image itself — never document-wide, which would break
+   copy/paste and assistive tech and is a dark pattern.
+
+   Deliberately NOT pointer-events: none (that would kill any click target the
+   image sits in), and no contextmenu suppression (not asked for). alt text,
+   semantics and og:image are untouched.
+
+   Be honest about what this is: friction, not protection. The file is still one
+   Network-tab click away. Real protection is what you serve — a downscaled or
+   watermarked derivative — not what you disable. */
+.hero-portrait img,
+.hero-portrait picture {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Screen-reader-only text. Clipped to a zero-area box rather than
+   display:none or visibility:hidden — those remove it from the accessibility
+   tree, which is the one thing it exists to be in. Used by the extlink partial
+   to announce "(opens in new tab)". */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The off-domain marker. Sized in em and coloured by currentColor so it tracks
+   whatever link it sits in, in either theme, at any type size — no new token,
+   nothing to keep in sync. Decorative only: the accessible name carries the
+   real message. */
+.ext-icon {
+  margin-left: 0.2em;
+  font-size: 0.8em;
+  line-height: 1;
+  /* Never let the glyph become the click target's only hit area, and never
+     shrink it out of the flow. */
+  white-space: nowrap;
 }
 
 /* Skip link: hidden until focused, then a real, visible control anchored to the
@@ -525,10 +605,14 @@ main:focus { outline: none; }
 }
 
 /* ---------------------------------------------------------------- FOOTER */
+/* No margin-top: the column-flex body already pushes this to the bottom, and
+   the last .section's own padding-block (64px) provides the separation on long
+   pages. The 32px margin that used to be here was additive on top of that, and
+   it was exactly what pushed the 404 eleven pixels past the fold at 375 —
+   anchoring the footer while still requiring a scroll to see it. */
 .footer {
   border-top: 1px solid var(--color-border-secondary);
   padding-block: var(--space-8);
-  margin-top: var(--space-8);
 }
 .footer-inner {
   display: flex;

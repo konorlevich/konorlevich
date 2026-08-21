@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/konorlevich/konorlevich/internal/cv"
+	"github.com/konorlevich/konorlevich/internal/render"
 	"github.com/konorlevich/konorlevich/internal/site"
 )
 
@@ -27,6 +28,14 @@ type PageData struct {
 	Robots      string // empty means index,follow (the default)
 	OGType      string
 	IsHome      bool
+}
+
+// SitemapEntry is one indexable URL and the date its content last changed. The
+// date comes from the content data, never from the build, so a redeploy with no
+// content edit produces a byte-identical sitemap.
+type SitemapEntry struct {
+	Loc     string
+	LastMod string
 }
 
 // pageSpec describes one server-rendered page.
@@ -86,6 +95,26 @@ func NewRenderer(assets *Assets, cfg site.Config, content cv.CV) *Renderer {
 				}
 			}
 			return b.String()
+		},
+		// downloadName is the filename the server actually sends for a given
+		// extension, so a file_download event reports the real name rather than
+		// a second guess at it.
+		"downloadName": func(ext string) string { return render.Filename(content, ext) },
+		// dict builds a map from alternating key/value pairs, so a shared partial
+		// can take named arguments. Used by the "extlink" partial.
+		"dict": func(pairs ...any) (map[string]any, error) {
+			if len(pairs)%2 != 0 {
+				return nil, fmt.Errorf("dict: odd number of arguments (%d)", len(pairs))
+			}
+			out := make(map[string]any, len(pairs)/2)
+			for i := 0; i < len(pairs); i += 2 {
+				key, ok := pairs[i].(string)
+				if !ok {
+					return nil, fmt.Errorf("dict: key %d is not a string", i)
+				}
+				out[key] = pairs[i+1]
+			}
+			return out, nil
 		},
 		// join concatenates a string slice with ", ".
 		"join": func(items []string) string { return strings.Join(items, ", ") },
@@ -148,11 +177,19 @@ const NotFoundPath = "/__404"
 // RenderAll parses each page against the shared layout and renders it to a
 // precompressed blob. Parsing and rendering both happen once, at boot, so a
 // broken template is a startup failure and no request ever executes a template.
-func (r *Renderer) RenderAll(fsys fs.FS, buildTime time.Time) (map[string]*Blob, []string, error) {
+func (r *Renderer) RenderAll(fsys fs.FS, buildTime time.Time) (map[string]*Blob, []SitemapEntry, error) {
 	pages := make(map[string]*Blob)
-	var sitemap []string
+	var sitemap []SitemapEntry
 
 	for _, spec := range r.specs() {
+		// Every page must carry a real content date. Missing one is a boot
+		// failure: a page with no honest lastmod would otherwise silently fall
+		// back to the build time, which is the exact lie this replaced.
+		page, ok := r.cv.Pages[spec.path]
+		if !ok || page.Updated == "" {
+			return nil, nil, fmt.Errorf("render page %s: no `updated` date in cv.yaml pages[%q]", spec.path, spec.path)
+		}
+
 		// One template set per page: layout + partials + that page's content,
 		// so two pages defining "content" can never collide.
 		tmpl, err := template.New("layout").Funcs(r.funcs).ParseFS(fsys,
@@ -187,7 +224,7 @@ func (r *Renderer) RenderAll(fsys fs.FS, buildTime time.Time) (map[string]*Blob,
 
 		pages[spec.path] = NewBlob("text/html; charset=utf-8", buf.Bytes(), htmlCacheControl, buildTime)
 		if spec.inSitemap {
-			sitemap = append(sitemap, spec.path)
+			sitemap = append(sitemap, SitemapEntry{Loc: r.site.URL(spec.path), LastMod: page.Updated})
 		}
 	}
 	return pages, sitemap, nil
